@@ -138,6 +138,9 @@
 {
 	if (page != currentPage) // Only if different
 	{
+        if( [self.delegate respondsToSelector:@selector(pageChangedTo:)] )
+            [self.delegate pageChangedTo:page];
+        
 		NSInteger minValue; NSInteger maxValue;
 		NSInteger maxPage = [document.pageCount integerValue];
 		NSInteger minPage = 1;

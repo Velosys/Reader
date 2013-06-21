@@ -31,9 +31,11 @@
 
 @protocol ReaderViewControllerDelegate <NSObject>
 
-@optional // Delegate protocols
-
+@required // Delegate protocols
 - (void)dismissReaderViewController:(ReaderViewController *)viewController;
+
+@optional
+- (void)pageChangedTo:(NSInteger)newPage;
 
 @end
 
@@ -42,5 +44,7 @@
 @property (nonatomic, unsafe_unretained, readwrite) id <ReaderViewControllerDelegate> delegate;
 
 - (id)initWithReaderDocument:(ReaderDocument *)object;
+
+- (void)showDocumentPage:(NSInteger)page;
 
 @end

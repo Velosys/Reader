@@ -44,6 +44,8 @@
 	NSMutableIndexSet *_bookmarks;
 
 	NSString *_fileName;
+    
+    NSString *_filePath;
 
 	NSString *_password;
 
@@ -60,6 +62,7 @@
 @synthesize bookmarks = _bookmarks;
 @synthesize lastOpen = _lastOpen;
 @synthesize password = _password;
+@synthesize filePath = _filePath;
 @dynamic fileName, fileURL;
 
 #pragma mark ReaderDocument class methods
@@ -210,8 +213,14 @@
 
 			_pageNumber = [NSNumber numberWithInteger:1]; // Start on page 1
 
+            _filePath = fullFilePath;
+            
 			_fileName = [ReaderDocument relativeFilePath:fullFilePath]; // File name
 
+            if( ![[NSFileManager defaultManager] fileExistsAtPath:fullFilePath] )
+                NSLog(@"File DNE");
+            
+            
 			CFURLRef docURLRef = (__bridge CFURLRef)[self fileURL]; // CFURLRef from NSURL
 
 			CGPDFDocumentRef thePDFDocRef = CGPDFDocumentCreateX(docURLRef, _password);
@@ -255,11 +264,9 @@
 
 - (NSURL *)fileURL
 {
-	if (_fileURL == nil) // Create and keep the file URL the first time it is requested
+	if (_fileURL == nil && _filePath != nil ) // Create and keep the file URL the first time it is requested
 	{
-		NSString *fullFilePath = [[ReaderDocument applicationPath] stringByAppendingPathComponent:_fileName];
-
-		_fileURL = [[NSURL alloc] initFileURLWithPath:fullFilePath isDirectory:NO]; // File URL from full file path
+		_fileURL = [[NSURL alloc] initFileURLWithPath:_filePath isDirectory:NO]; // File URL from full file path
 	}
 
 	return _fileURL;
@@ -322,6 +329,8 @@
 	[encoder encodeObject:_fileSize forKey:@"FileSize"];
 
 	[encoder encodeObject:_lastOpen forKey:@"LastOpen"];
+    
+    [encoder encodeObject:_filePath forKey:@"FilePath"];
 }
 
 - (id)initWithCoder:(NSCoder *)decoder
@@ -344,6 +353,8 @@
 
 		_lastOpen = [decoder decodeObjectForKey:@"LastOpen"];
 
+        _filePath = [decoder decodeObjectForKey:@"FilePath"];
+        
 		if (_guid == nil) _guid = [ReaderDocument GUID];
 
 		if (_bookmarks != nil)
