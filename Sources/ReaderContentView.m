@@ -276,6 +276,30 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 
 #pragma mark UIScrollViewDelegate methods
 
+- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
+{
+//    DLog(@"ended zooming at scale: %.2f", scrollView.zoomScale);
+    if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
+        [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+//    DLog(@"ended dragging at offset: %@", NSStringFromCGPoint(scrollView.contentOffset) );
+    if( !decelerate )
+    {
+        if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
+            [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
+    }
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+//    DLog(@"ended decelerating at offset: %@", NSStringFromCGPoint(scrollView.contentOffset) );
+    if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
+        [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
+}
+
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
 {
 	return theContainerView;

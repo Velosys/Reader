@@ -35,7 +35,8 @@
 - (void)dismissReaderViewController:(ReaderViewController *)viewController;
 
 @optional
-- (void)pageChangedTo:(NSInteger)newPage;
+- (void)readerViewControllerPageChangedTo:(NSInteger)newPage;
+- (void)readerViewControllerContentOffsetChanged:(CGPoint)newContentOffset zoomScale:(CGFloat)zoomScale;
 
 @end
 
@@ -46,5 +47,9 @@
 - (id)initWithReaderDocument:(ReaderDocument *)object;
 
 - (void)showDocumentPage:(NSInteger)page;
+
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale;
+
+- (void)setToolbarsVisible:(BOOL)toolbarsVisible;
 
 @end

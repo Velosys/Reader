@@ -138,8 +138,8 @@
 {
 	if (page != currentPage) // Only if different
 	{
-        if( [self.delegate respondsToSelector:@selector(pageChangedTo:)] )
-            [self.delegate pageChangedTo:page];
+        if( [self.delegate respondsToSelector:@selector(readerViewControllerPageChangedTo:)] )
+            [self.delegate readerViewControllerPageChangedTo:page];
         
 		NSInteger minValue; NSInteger maxValue;
 		NSInteger maxPage = [document.pageCount integerValue];
@@ -483,9 +483,14 @@
 
 #pragma mark UIScrollViewDelegate methods
 
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    DLog(@"offset: %@", NSStringFromCGPoint(scrollView.contentOffset) );
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-	__block NSInteger page = 0;
+	__block NSInteger page = -1;
 
 	CGFloat contentOffsetX = scrollView.contentOffset.x;
 
@@ -501,7 +506,7 @@
 		}
 	];
 
-	if (page != 0) [self showDocumentPage:page]; // Show the page
+	if (page != -1) [self showDocumentPage:page]; // Show the page
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
@@ -726,6 +731,32 @@
 
 		lastHideTime = [NSDate date];
 	}
+}
+
+- (void)contentView:(ReaderContentView *)contentView scrolledToOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale
+{
+    DLog(@"offset: %@ ; scale: %.2f", NSStringFromCGPoint(offset), zoomScale);
+
+    if( [self.delegate respondsToSelector:@selector(readerViewControllerContentOffsetChanged:zoomScale:)] )
+        [self.delegate readerViewControllerContentOffsetChanged:offset zoomScale:zoomScale];
+}
+
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale
+{
+    NSInteger page = [document.pageNumber integerValue]; // Current page #
+    NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
+    ReaderContentView *targetView = [contentViews objectForKey:key];
+    
+    [targetView setZoomScale:zoomScale animated:YES];
+    [targetView setContentOffset:contentOffset animated:YES];
+//    targetView.zoomScale = zoomScale;
+//    targetView.contentOffset = contentOffset;
+}
+
+- (void)setToolbarsVisible:(BOOL)toolbarsVisible
+{
+    [mainPagebar hidePagebar];
+    [mainToolbar hideToolbar];
 }
 
 #pragma mark ReaderMainToolbarDelegate methods
