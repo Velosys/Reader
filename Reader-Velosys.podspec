@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-	s.name			= 'Reader'
+	s.name			= 'Reader-Velosys'
 	s.version		= '2.6.2'
 	s.summary		= 'An open-source PDF viewing framework'
 	s.author = {
