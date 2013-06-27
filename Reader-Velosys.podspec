@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
 		'Julius Oklamcak' => 'joklamcak@gmail.com'
 	}
 	s.source = {
-		:git => 'https://github.com/Velosys/Reader.git',
+		:git => 'https://github.com/Velosys/Reader-Velosys.git',
 		:tag => '2.6.2'
 	}
 	s.license	= 'MIT'
