@@ -12,5 +12,5 @@ Pod::Spec.new do |s|
 	s.license	= 'MIT'
 	s.source_files = 'Sources/*.{h,m}'
 	s.requires_arc = true
-	s.resource = 'Graphics/Resources.bundle'
+	s.resource = 'Graphics/Reader-Resources.bundle'
 end
