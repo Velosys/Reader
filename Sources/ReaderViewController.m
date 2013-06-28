@@ -483,11 +483,6 @@
 
 #pragma mark UIScrollViewDelegate methods
 
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-    DLog(@"offset: %@", NSStringFromCGPoint(scrollView.contentOffset) );
-}
-
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
 	__block NSInteger page = -1;
@@ -735,8 +730,6 @@
 
 - (void)contentView:(ReaderContentView *)contentView scrolledToOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale
 {
-    DLog(@"offset: %@ ; scale: %.2f", NSStringFromCGPoint(offset), zoomScale);
-
     if( [self.delegate respondsToSelector:@selector(readerViewControllerContentOffsetChanged:zoomScale:)] )
         [self.delegate readerViewControllerContentOffsetChanged:offset zoomScale:zoomScale];
 }

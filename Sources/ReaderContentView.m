@@ -278,14 +278,12 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
 {
-//    DLog(@"ended zooming at scale: %.2f", scrollView.zoomScale);
     if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
         [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-//    DLog(@"ended dragging at offset: %@", NSStringFromCGPoint(scrollView.contentOffset) );
     if( !decelerate )
     {
         if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
@@ -295,7 +293,6 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-//    DLog(@"ended decelerating at offset: %@", NSStringFromCGPoint(scrollView.contentOffset) );
     if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
         [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
 }
