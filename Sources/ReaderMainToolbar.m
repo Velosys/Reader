@@ -71,9 +71,8 @@
 	{
 		CGFloat viewWidth = self.bounds.size.width;
 
-        NSBundle *resourceBundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"Reader-Resources" ofType:@"bundle"]];
-		UIImage *imageH = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Button-H" ofType:@"png"]];
-		UIImage *imageN = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Button-N" ofType:@"png"]];
+		UIImage *imageH = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Button-H.png"];
+		UIImage *imageN = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Button-N.png"];
 
 		UIImage *buttonH = [imageH stretchableImageWithLeftCapWidth:5 topCapHeight:0];
 		UIImage *buttonN = [imageN stretchableImageWithLeftCapWidth:5 topCapHeight:0];
@@ -106,7 +105,7 @@
 #if (READER_ENABLE_THUMBS == TRUE) // Option
 
 		UIButton *thumbsButton = [UIButton buttonWithType:UIButtonTypeCustom];
-		UIImage *thumbsImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Thumbs" ofType:@"png"]];
+		UIImage *thumbsImage = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Thumbs.png"];
 
 		thumbsButton.frame = CGRectMake(leftButtonX, BUTTON_Y, THUMBS_BUTTON_WIDTH, BUTTON_HEIGHT);
 		[thumbsButton setImage:thumbsImage forState:UIControlStateNormal];
@@ -145,8 +144,8 @@
 
 		markButton = flagButton; markButton.enabled = NO; markButton.tag = NSIntegerMin;
 
-		markImageN = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Mark-N" ofType:@"png"]]; // N image
-		markImageY = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Mark-Y" ofType:@"png"]]; // Y image
+		markImageN = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Mark-N.png"]; // N image
+		markImageY = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Mark-Y.png"]; // Y image
 
 #endif // end of READER_BOOKMARKS Option
 
@@ -161,7 +160,7 @@
 				rightButtonX -= (EMAIL_BUTTON_WIDTH + BUTTON_SPACE);
 
 				UIButton *emailButton = [UIButton buttonWithType:UIButtonTypeCustom];
-                UIImage *emailImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Email" ofType:@"png"]];
+                UIImage *emailImage = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Email.png"];
 				emailButton.frame = CGRectMake(rightButtonX, BUTTON_Y, EMAIL_BUTTON_WIDTH, BUTTON_HEIGHT);
 				[emailButton setImage:emailImage forState:UIControlStateNormal];
 				[emailButton addTarget:self action:@selector(emailButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -187,7 +186,7 @@
 				rightButtonX -= (PRINT_BUTTON_WIDTH + BUTTON_SPACE);
 
 				UIButton *printButton = [UIButton buttonWithType:UIButtonTypeCustom];
-                UIImage *printImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Print" ofType:@"png"]];
+                UIImage *printImage = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Print.png"];
 				printButton.frame = CGRectMake(rightButtonX, BUTTON_Y, PRINT_BUTTON_WIDTH, BUTTON_HEIGHT);
 				[printButton setImage:printImage forState:UIControlStateNormal];
 				[printButton addTarget:self action:@selector(printButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
