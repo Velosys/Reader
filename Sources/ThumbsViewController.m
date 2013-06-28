@@ -397,8 +397,9 @@
 
 		[imageView addSubview:tintView];
 
-		UIImage *image = [UIImage imageNamed:@"Reader-Mark-Y"];
-
+        NSBundle *resourceBundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"Reader-Resources" ofType:@"bundle"]];
+		UIImage *image = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Mark-Y" ofType:@"png"]];
+        
 		bookMark = [[UIImageView alloc] initWithImage:image];
 
 		bookMark.hidden = YES;

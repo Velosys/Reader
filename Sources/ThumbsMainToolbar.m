@@ -57,8 +57,9 @@
 	{
 		CGFloat viewWidth = self.bounds.size.width;
 
-		UIImage *imageH = [UIImage imageNamed:@"Reader-Button-H"];
-		UIImage *imageN = [UIImage imageNamed:@"Reader-Button-N"];
+        NSBundle *resourceBundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"Reader-Resources" ofType:@"bundle"]];
+		UIImage *imageH = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Button-H" ofType:@"png"]];
+		UIImage *imageN = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Button-N" ofType:@"png"]];
 
 		UIImage *buttonH = [imageH stretchableImageWithLeftCapWidth:5 topCapHeight:0];
 		UIImage *buttonN = [imageN stretchableImageWithLeftCapWidth:5 topCapHeight:0];
@@ -86,8 +87,8 @@
 
 		CGFloat showControlX = (viewWidth - (SHOW_CONTROL_WIDTH + BUTTON_SPACE));
 
-		UIImage *thumbsImage = [UIImage imageNamed:@"Reader-Thumbs"];
-		UIImage *bookmarkImage = [UIImage imageNamed:@"Reader-Mark-Y"];
+		UIImage *thumbsImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Thumbs" ofType:@"png"]];
+		UIImage *bookmarkImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Mark-Y" ofType:@"png"]];
 		NSArray *buttonItems = [NSArray arrayWithObjects:thumbsImage, bookmarkImage, nil];
 
 		UISegmentedControl *showControl = [[UISegmentedControl alloc] initWithItems:buttonItems];

@@ -71,8 +71,9 @@
 	{
 		CGFloat viewWidth = self.bounds.size.width;
 
-		UIImage *imageH = [UIImage imageNamed:@"Reader-Button-H"];
-		UIImage *imageN = [UIImage imageNamed:@"Reader-Button-N"];
+        NSBundle *resourceBundle = [NSBundle bundleWithPath:[[NSBundle mainBundle] pathForResource:@"Reader-Resources" ofType:@"bundle"]];
+		UIImage *imageH = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Button-H" ofType:@"png"]];
+		UIImage *imageN = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Button-N" ofType:@"png"]];
 
 		UIImage *buttonH = [imageH stretchableImageWithLeftCapWidth:5 topCapHeight:0];
 		UIImage *buttonN = [imageN stretchableImageWithLeftCapWidth:5 topCapHeight:0];
@@ -105,9 +106,10 @@
 #if (READER_ENABLE_THUMBS == TRUE) // Option
 
 		UIButton *thumbsButton = [UIButton buttonWithType:UIButtonTypeCustom];
+		UIImage *thumbsImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Thumbs" ofType:@"png"]];
 
 		thumbsButton.frame = CGRectMake(leftButtonX, BUTTON_Y, THUMBS_BUTTON_WIDTH, BUTTON_HEIGHT);
-		[thumbsButton setImage:[UIImage imageNamed:@"Reader-Thumbs"] forState:UIControlStateNormal];
+		[thumbsButton setImage:thumbsImage forState:UIControlStateNormal];
 		[thumbsButton addTarget:self action:@selector(thumbsButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 		[thumbsButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
 		[thumbsButton setBackgroundImage:buttonN forState:UIControlStateNormal];
@@ -133,7 +135,6 @@
 		UIButton *flagButton = [UIButton buttonWithType:UIButtonTypeCustom];
 
 		flagButton.frame = CGRectMake(rightButtonX, BUTTON_Y, MARK_BUTTON_WIDTH, BUTTON_HEIGHT);
-		//[flagButton setImage:[UIImage imageNamed:@"Reader-Mark-N"] forState:UIControlStateNormal];
 		[flagButton addTarget:self action:@selector(markButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 		[flagButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
 		[flagButton setBackgroundImage:buttonN forState:UIControlStateNormal];
@@ -144,8 +145,8 @@
 
 		markButton = flagButton; markButton.enabled = NO; markButton.tag = NSIntegerMin;
 
-		markImageN = [UIImage imageNamed:@"Reader-Mark-N"]; // N image
-		markImageY = [UIImage imageNamed:@"Reader-Mark-Y"]; // Y image
+		markImageN = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Mark-N" ofType:@"png"]]; // N image
+		markImageY = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Mark-Y" ofType:@"png"]]; // Y image
 
 #endif // end of READER_BOOKMARKS Option
 
@@ -160,9 +161,9 @@
 				rightButtonX -= (EMAIL_BUTTON_WIDTH + BUTTON_SPACE);
 
 				UIButton *emailButton = [UIButton buttonWithType:UIButtonTypeCustom];
-
+                UIImage *emailImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Email" ofType:@"png"]];
 				emailButton.frame = CGRectMake(rightButtonX, BUTTON_Y, EMAIL_BUTTON_WIDTH, BUTTON_HEIGHT);
-				[emailButton setImage:[UIImage imageNamed:@"Reader-Email"] forState:UIControlStateNormal];
+				[emailButton setImage:emailImage forState:UIControlStateNormal];
 				[emailButton addTarget:self action:@selector(emailButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 				[emailButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
 				[emailButton setBackgroundImage:buttonN forState:UIControlStateNormal];
@@ -186,9 +187,9 @@
 				rightButtonX -= (PRINT_BUTTON_WIDTH + BUTTON_SPACE);
 
 				UIButton *printButton = [UIButton buttonWithType:UIButtonTypeCustom];
-
+                UIImage *printImage = [UIImage imageWithContentsOfFile:[resourceBundle pathForResource:@"Reader-Print" ofType:@"png"]];
 				printButton.frame = CGRectMake(rightButtonX, BUTTON_Y, PRINT_BUTTON_WIDTH, BUTTON_HEIGHT);
-				[printButton setImage:[UIImage imageNamed:@"Reader-Print"] forState:UIControlStateNormal];
+				[printButton setImage:printImage forState:UIControlStateNormal];
 				[printButton addTarget:self action:@selector(printButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 				[printButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
 				[printButton setBackgroundImage:buttonN forState:UIControlStateNormal];
