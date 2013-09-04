@@ -26,6 +26,7 @@
 #import "ReaderConstants.h"
 #import "ReaderMainToolbar.h"
 #import "ReaderDocument.h"
+#import "UIDevice+VersionCheck.h"
 
 #import <MessageUI/MessageUI.h>
 
@@ -207,7 +208,21 @@
 
 			UILabel *titleLabel = [[UILabel alloc] initWithFrame:titleRect];
 
-			titleLabel.textAlignment = UITextAlignmentCenter;
+            if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
+            {
+                titleLabel.textAlignment = NSTextAlignmentCenter;
+                titleLabel.minimumScaleFactor = 0.25;
+            }
+            else
+            {
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Wconversion"
+                #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+                titleLabel.textAlignment = UITextAlignmentCenter;
+                titleLabel.minimumFontSize = 14.0f;
+                #pragma clang diagnostic pop
+            }
+
 			titleLabel.font = [UIFont systemFontOfSize:19.0f];
 			titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 			titleLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
@@ -216,7 +231,6 @@
 			titleLabel.backgroundColor = [UIColor clearColor];
 			titleLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
 			titleLabel.adjustsFontSizeToFitWidth = YES;
-			titleLabel.minimumFontSize = 14.0f;
 			titleLabel.text = [object.fileName stringByDeletingPathExtension];
 
 			[self addSubview:titleLabel]; 

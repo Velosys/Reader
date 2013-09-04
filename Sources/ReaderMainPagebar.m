@@ -26,6 +26,7 @@
 #import "ReaderMainPagebar.h"
 #import "ReaderThumbCache.h"
 #import "ReaderDocument.h"
+#import "UIDevice+VersionCheck.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -179,14 +180,28 @@
 
 		pageNumberLabel.autoresizesSubviews = NO;
 		pageNumberLabel.autoresizingMask = UIViewAutoresizingNone;
-		pageNumberLabel.textAlignment = UITextAlignmentCenter;
+        
+        if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
+        {
+            pageNumberLabel.textAlignment = NSTextAlignmentCenter;
+            pageNumberLabel.minimumScaleFactor = 0.25;
+        }
+        else
+        {
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wconversion"
+            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            pageNumberLabel.textAlignment = UITextAlignmentCenter;
+            pageNumberLabel.minimumFontSize = 12.0f;
+            #pragma clang diagnostic pop
+        }
+
 		pageNumberLabel.backgroundColor = [UIColor clearColor];
 		pageNumberLabel.textColor = [UIColor whiteColor];
 		pageNumberLabel.font = [UIFont systemFontOfSize:16.0f];
 		pageNumberLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
 		pageNumberLabel.shadowColor = [UIColor blackColor];
 		pageNumberLabel.adjustsFontSizeToFitWidth = YES;
-		pageNumberLabel.minimumFontSize = 12.0f;
 
 		[pageNumberView addSubview:pageNumberLabel]; // Add label view
 

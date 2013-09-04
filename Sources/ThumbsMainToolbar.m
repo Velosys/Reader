@@ -25,6 +25,7 @@
 
 #import "ReaderConstants.h"
 #import "ThumbsMainToolbar.h"
+#import "UIDevice+VersionCheck.h"
 
 @implementation ThumbsMainToolbar
 
@@ -113,7 +114,21 @@
 
 			UILabel *titleLabel = [[UILabel alloc] initWithFrame:titleRect];
 
-			titleLabel.textAlignment = UITextAlignmentCenter;
+            if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
+            {
+                titleLabel.textAlignment = NSTextAlignmentCenter;
+                titleLabel.minimumScaleFactor = 0.25;
+            }
+            else
+            {
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Wconversion"
+                #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+                titleLabel.textAlignment = UITextAlignmentCenter;
+                titleLabel.minimumFontSize = 14.0f;
+                #pragma clang diagnostic pop
+            }
+
 			titleLabel.font = [UIFont systemFontOfSize:19.0f];
 			titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 			titleLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
@@ -122,7 +137,6 @@
 			titleLabel.backgroundColor = [UIColor clearColor];
 			titleLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
 			titleLabel.adjustsFontSizeToFitWidth = YES;
-			titleLabel.minimumFontSize = 14.0f;
 			titleLabel.text = title;
 
 			[self addSubview:titleLabel]; 

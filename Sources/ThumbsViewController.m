@@ -28,6 +28,7 @@
 #import "ReaderThumbRequest.h"
 #import "ReaderThumbCache.h"
 #import "ReaderDocument.h"
+#import "UIDevice+VersionCheck.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -361,7 +362,20 @@
 		textLabel.userInteractionEnabled = NO;
 		textLabel.contentMode = UIViewContentModeRedraw;
 		textLabel.autoresizingMask = UIViewAutoresizingNone;
-		textLabel.textAlignment = UITextAlignmentCenter;
+
+        if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
+        {
+            textLabel.textAlignment = NSTextAlignmentCenter;
+        }
+        else
+        {
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wconversion"
+            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            textLabel.textAlignment = UITextAlignmentCenter;
+            #pragma clang diagnostic pop
+        }
+
 		textLabel.font = [UIFont systemFontOfSize:fontSize];
 		textLabel.textColor = [UIColor colorWithWhite:0.24f alpha:1.0f];
 		textLabel.backgroundColor = [UIColor whiteColor];
