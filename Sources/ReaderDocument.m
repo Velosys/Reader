@@ -160,7 +160,8 @@
 {
 	ReaderDocument *document = nil; // ReaderDocument object
 
-	document = [ReaderDocument unarchiveFromFileName:filePath password:phrase];
+    // This unarchiveFromFileName doesn't take into consideration the full path and only looks at the 
+//	document = [ReaderDocument unarchiveFromFileName:filePath password:phrase];
 
 	if (document == nil) // Unarchive failed so we create a new ReaderDocument object
 	{
@@ -248,7 +249,7 @@
 
 			_fileSize = [fileAttributes objectForKey:NSFileSize]; // File size (bytes)
 
-			[self saveReaderDocument]; // Save the ReaderDocument object
+//			[self saveReaderDocument]; // Save the ReaderDocument object
 
 			object = self; // Return initialized ReaderDocument object
 		}

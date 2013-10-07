@@ -758,7 +758,7 @@
 {
 #if (READER_STANDALONE == FALSE) // Option
 
-	[document saveReaderDocument]; // Save any ReaderDocument object changes
+//	[document saveReaderDocument]; // Save any ReaderDocument object changes
 
 	[[ReaderThumbQueue sharedInstance] cancelOperationsWithGUID:document.guid];
 
@@ -932,7 +932,7 @@
 
 - (void)applicationWill:(NSNotification *)notification
 {
-	[document saveReaderDocument]; // Save any ReaderDocument object changes
+//	[document saveReaderDocument]; // Save any ReaderDocument object changes
 
 	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
 	{
