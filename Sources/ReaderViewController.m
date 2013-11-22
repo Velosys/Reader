@@ -59,6 +59,8 @@
 	NSDate *lastHideTime;
 
 	BOOL isVisible;
+    
+    UIButton *closeButton;
 }
 
 #pragma mark Constants
@@ -337,11 +339,16 @@
 	CGRect toolbarRect = viewRect;
 	toolbarRect.size.height = TOOLBAR_HEIGHT;
 
-	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // At top
-
-	mainToolbar.delegate = self;
-
-	[self.view addSubview:mainToolbar];
+//	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // At top
+//
+//	mainToolbar.delegate = self;
+//
+//	[self.view addSubview:mainToolbar];
+    closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [closeButton setTitle:@"Close" forState:UIControlStateNormal];
+    [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+    [self.view addSubview:closeButton];
 
 	CGRect pagebarRect = viewRect;
 	pagebarRect.size.height = PAGEBAR_HEIGHT;
@@ -368,6 +375,15 @@
 	[singleTapOne requireGestureRecognizerToFail:doubleTapOne]; // Single tap requires double tap to fail
 
 	contentViews = [NSMutableDictionary new]; lastHideTime = [NSDate date];
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    CGFloat doneButtonWidth = 72.0f;
+    CGFloat doneButtonHeight = 44.0f;
+    CGFloat doneButtonPadding = 20.0f;
+    closeButton.frame = CGRectMake(CGRectGetWidth(self.view.bounds) - doneButtonWidth - (doneButtonPadding / 2.0f), doneButtonPadding, doneButtonWidth, doneButtonHeight);
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -939,5 +955,36 @@
 		if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 	}
 }
+
+#pragma mark UI Customization Methods
+
+- (void)doneButtonTapped:(id)sender
+{
+    if (sender == closeButton)
+    {
+        [self tappedInToolbar:nil doneButton:sender];
+    }
+}
+
+- (void)setCloseButtonImage:(UIImage *)image highlightedImage:(UIImage *)highlightImage selectedImage:(UIImage *)selectedImage
+{
+    if (!image)
+        return;
+    
+    CGRect doneButtonFrame = closeButton.frame;
+    
+    closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+    closeButton.frame = doneButtonFrame;
+    [closeButton setImage:image forState:UIControlStateNormal];
+    
+    if (highlightImage)
+        [closeButton setImage:highlightImage forState:UIControlStateHighlighted];
+    
+    if (selectedImage)
+        [closeButton setImage:selectedImage forState:UIControlStateSelected];
+}
+
 
 @end
