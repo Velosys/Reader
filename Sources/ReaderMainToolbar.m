@@ -84,20 +84,21 @@
 
 #if (READER_STANDALONE == FALSE) // Option
 
-		UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
-
-		doneButton.frame = CGRectMake(leftButtonX, BUTTON_Y, DONE_BUTTON_WIDTH, BUTTON_HEIGHT);
-		[doneButton setTitle:NSLocalizedString(@"Done", @"button") forState:UIControlStateNormal];
-		[doneButton setTitleColor:[UIColor colorWithWhite:0.0f alpha:1.0f] forState:UIControlStateNormal];
-		[doneButton setTitleColor:[UIColor colorWithWhite:1.0f alpha:1.0f] forState:UIControlStateHighlighted];
-		[doneButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-		[doneButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
-		[doneButton setBackgroundImage:buttonN forState:UIControlStateNormal];
-		doneButton.titleLabel.font = [UIFont systemFontOfSize:14.0f];
-		doneButton.autoresizingMask = UIViewAutoresizingNone;
-		doneButton.exclusiveTouch = YES;
-
-		[self addSubview:doneButton]; leftButtonX += (DONE_BUTTON_WIDTH + BUTTON_SPACE);
+//		UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
+//
+//		doneButton.frame = CGRectMake(leftButtonX, BUTTON_Y, DONE_BUTTON_WIDTH, BUTTON_HEIGHT);
+//		[doneButton setTitle:NSLocalizedString(@"Done", @"button") forState:UIControlStateNormal];
+//		[doneButton setTitleColor:[UIColor colorWithWhite:0.0f alpha:1.0f] forState:UIControlStateNormal];
+//		[doneButton setTitleColor:[UIColor colorWithWhite:1.0f alpha:1.0f] forState:UIControlStateHighlighted];
+//		[doneButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+//		[doneButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
+//		[doneButton setBackgroundImage:buttonN forState:UIControlStateNormal];
+//		doneButton.titleLabel.font = [UIFont systemFontOfSize:14.0f];
+//		doneButton.autoresizingMask = UIViewAutoresizingNone;
+//		doneButton.exclusiveTouch = YES;
+//
+//		[self addSubview:doneButton];
+        leftButtonX += (DONE_BUTTON_WIDTH + BUTTON_SPACE);
 
 		titleX += (DONE_BUTTON_WIDTH + BUTTON_SPACE); titleWidth -= (DONE_BUTTON_WIDTH + BUTTON_SPACE);
 
@@ -202,39 +203,39 @@
 
 #endif // end of READER_ENABLE_PRINT Option
 
-		if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
-		{
-			CGRect titleRect = CGRectMake(titleX, BUTTON_Y, titleWidth, TITLE_HEIGHT);
-
-			UILabel *titleLabel = [[UILabel alloc] initWithFrame:titleRect];
-
-            if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
-            {
-                titleLabel.textAlignment = NSTextAlignmentCenter;
-                titleLabel.minimumScaleFactor = 0.25;
-            }
-            else
-            {
-                #pragma clang diagnostic push
-                #pragma clang diagnostic ignored "-Wconversion"
-                #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-                titleLabel.textAlignment = UITextAlignmentCenter;
-                titleLabel.minimumFontSize = 14.0f;
-                #pragma clang diagnostic pop
-            }
-
-			titleLabel.font = [UIFont systemFontOfSize:19.0f];
-			titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-			titleLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-			titleLabel.textColor = [UIColor colorWithWhite:0.0f alpha:1.0f];
-			titleLabel.shadowColor = [UIColor colorWithWhite:0.65f alpha:1.0f];
-			titleLabel.backgroundColor = [UIColor clearColor];
-			titleLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
-			titleLabel.adjustsFontSizeToFitWidth = YES;
-			titleLabel.text = [object.fileName stringByDeletingPathExtension];
-
-			[self addSubview:titleLabel]; 
-		}
+//		if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
+//		{
+//			CGRect titleRect = CGRectMake(titleX, BUTTON_Y, titleWidth, TITLE_HEIGHT);
+//
+//			UILabel *titleLabel = [[UILabel alloc] initWithFrame:titleRect];
+//
+//            if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
+//            {
+//                titleLabel.textAlignment = NSTextAlignmentCenter;
+//                titleLabel.minimumScaleFactor = 0.25;
+//            }
+//            else
+//            {
+//                #pragma clang diagnostic push
+//                #pragma clang diagnostic ignored "-Wconversion"
+//                #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+//                titleLabel.textAlignment = UITextAlignmentCenter;
+//                titleLabel.minimumFontSize = 14.0f;
+//                #pragma clang diagnostic pop
+//            }
+//
+//			titleLabel.font = [UIFont systemFontOfSize:19.0f];
+//			titleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+//			titleLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
+//			titleLabel.textColor = [UIColor colorWithWhite:0.0f alpha:1.0f];
+//			titleLabel.shadowColor = [UIColor colorWithWhite:0.65f alpha:1.0f];
+//			titleLabel.backgroundColor = [UIColor clearColor];
+//			titleLabel.shadowOffset = CGSizeMake(0.0f, 1.0f);
+//			titleLabel.adjustsFontSizeToFitWidth = YES;
+//			titleLabel.text = [object.fileName stringByDeletingPathExtension];
+//
+//			[self addSubview:titleLabel]; 
+//		}
 	}
 
 	return self;

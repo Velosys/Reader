@@ -339,11 +339,12 @@
 	CGRect toolbarRect = viewRect;
 	toolbarRect.size.height = TOOLBAR_HEIGHT;
 
-//	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // At top
-//
-//	mainToolbar.delegate = self;
-//
-//	[self.view addSubview:mainToolbar];
+	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // At top
+
+	mainToolbar.delegate = self;
+
+	[self.view addSubview:mainToolbar];
+    
     closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [closeButton setTitle:@"Close" forState:UIControlStateNormal];
     [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];

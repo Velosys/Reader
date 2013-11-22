@@ -147,16 +147,16 @@
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
 		self.backgroundColor = [UIColor clearColor];
 
-		CAGradientLayer *layer = (CAGradientLayer *)self.layer;
-		UIColor *liteColor = [UIColor colorWithWhite:0.82f alpha:0.8f];
-		UIColor *darkColor = [UIColor colorWithWhite:0.32f alpha:0.8f];
-		layer.colors = [NSArray arrayWithObjects:(id)liteColor.CGColor, (id)darkColor.CGColor, nil];
-
-		CGRect shadowRect = self.bounds; shadowRect.size.height = 4.0f; shadowRect.origin.y -= shadowRect.size.height;
-
-		ReaderPagebarShadow *shadowView = [[ReaderPagebarShadow alloc] initWithFrame:shadowRect];
-
-		[self addSubview:shadowView]; // Add the shadow to the view
+//		CAGradientLayer *layer = (CAGradientLayer *)self.layer;
+//		UIColor *liteColor = [UIColor colorWithWhite:0.82f alpha:0.8f];
+//		UIColor *darkColor = [UIColor colorWithWhite:0.32f alpha:0.8f];
+//		layer.colors = [NSArray arrayWithObjects:(id)liteColor.CGColor, (id)darkColor.CGColor, nil];
+//
+//		CGRect shadowRect = self.bounds; shadowRect.size.height = 4.0f; shadowRect.origin.y -= shadowRect.size.height;
+//
+//		ReaderPagebarShadow *shadowView = [[ReaderPagebarShadow alloc] initWithFrame:shadowRect];
+//
+//		[self addSubview:shadowView]; // Add the shadow to the view
 
 		CGFloat numberY = (0.0f - (PAGE_NUMBER_HEIGHT + PAGE_NUMBER_SPACE));
 		CGFloat numberX = ((self.bounds.size.width - PAGE_NUMBER_WIDTH) / 2.0f);
@@ -320,7 +320,7 @@
 
 		thumbRect.origin.x += thumbWidth; // Next thumb X position
 	}
-
+    
 	[thumbsToHide enumerateKeysAndObjectsUsingBlock: // Hide unused thumbs
 		^(id key, id object, BOOL *stop)
 		{
