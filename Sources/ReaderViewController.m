@@ -349,6 +349,10 @@
     [closeButton setTitle:@"Close" forState:UIControlStateNormal];
     [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+    [closeButton setBackgroundColor:[UIColor lightGrayColor]];
+    [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
+    [closeButton setAlpha:0.8];
     [self.view addSubview:closeButton];
 
 	CGRect pagebarRect = viewRect;
