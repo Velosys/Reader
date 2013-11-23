@@ -313,7 +313,7 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-
+    
 	assert(document != nil); // Must have a valid ReaderDocument
 
 	self.view.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
@@ -385,10 +385,22 @@
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
-    CGFloat doneButtonWidth = 72.0f;
-    CGFloat doneButtonHeight = 44.0f;
-    CGFloat doneButtonPadding = 20.0f;
-    closeButton.frame = CGRectMake(CGRectGetWidth(self.view.bounds) - doneButtonWidth - (doneButtonPadding / 2.0f), doneButtonPadding, doneButtonWidth, doneButtonHeight);
+    
+    CGFloat closeButtonWidth;
+    CGFloat closeButtonHeight;
+    
+    UIImage *normalImage = [closeButton imageForState:UIControlStateNormal];
+    if (normalImage)
+    {
+        closeButtonWidth = normalImage.size.width;
+        closeButtonHeight = normalImage.size.height;
+    }
+    else
+    {
+        closeButtonWidth = 72.0f;
+        closeButtonHeight = 44.0f;
+    }
+    closeButton.frame = CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth, 0, closeButtonWidth, closeButtonHeight);
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -976,6 +988,9 @@
     if (!image)
         return;
     
+    if ([closeButton superview])
+        [closeButton removeFromSuperview];
+    
     CGRect doneButtonFrame = closeButton.frame;
     
     closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -989,6 +1004,8 @@
     
     if (selectedImage)
         [closeButton setImage:selectedImage forState:UIControlStateSelected];
+    
+    [self.view addSubview:closeButton];
 }
 
 

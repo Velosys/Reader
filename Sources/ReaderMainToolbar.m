@@ -84,21 +84,7 @@
 
 #if (READER_STANDALONE == FALSE) // Option
 
-//		UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
-//
-//		doneButton.frame = CGRectMake(leftButtonX, BUTTON_Y, DONE_BUTTON_WIDTH, BUTTON_HEIGHT);
-//		[doneButton setTitle:NSLocalizedString(@"Done", @"button") forState:UIControlStateNormal];
-//		[doneButton setTitleColor:[UIColor colorWithWhite:0.0f alpha:1.0f] forState:UIControlStateNormal];
-//		[doneButton setTitleColor:[UIColor colorWithWhite:1.0f alpha:1.0f] forState:UIControlStateHighlighted];
-//		[doneButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-//		[doneButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
-//		[doneButton setBackgroundImage:buttonN forState:UIControlStateNormal];
-//		doneButton.titleLabel.font = [UIFont systemFontOfSize:14.0f];
-//		doneButton.autoresizingMask = UIViewAutoresizingNone;
-//		doneButton.exclusiveTouch = YES;
-//
-//		[self addSubview:doneButton];
-        leftButtonX += (DONE_BUTTON_WIDTH + BUTTON_SPACE);
+         leftButtonX += (DONE_BUTTON_WIDTH + BUTTON_SPACE);
 
 		titleX += (DONE_BUTTON_WIDTH + BUTTON_SPACE); titleWidth -= (DONE_BUTTON_WIDTH + BUTTON_SPACE);
 
