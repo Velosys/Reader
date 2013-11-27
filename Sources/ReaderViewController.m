@@ -1008,5 +1008,24 @@
     [self.view addSubview:closeButton];
 }
 
+- (void)setToolbarsEnabled:(BOOL)toolbarsEnabled
+{
+    if (toolbarsEnabled)
+    {
+        if (![mainToolbar superview])
+           [self.view addSubview:mainToolbar];
+        
+        if (![mainPagebar superview])
+            [self.view addSubview:mainPagebar];
+    }
+    else
+    {
+        if ([mainToolbar superview])
+            [mainToolbar removeFromSuperview];
+        
+        if ([mainPagebar superview])
+            [mainPagebar removeFromSuperview];
+    }
+}
 
 @end

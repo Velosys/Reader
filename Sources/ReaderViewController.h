@@ -54,4 +54,6 @@
 
 - (void)setCloseButtonImage:(UIImage *)image highlightedImage:(UIImage *)highlightImage selectedImage:(UIImage *)selectedImage;
 
+- (void)setToolbarsEnabled:(BOOL)toolbarsEnabled;
+
 @end
