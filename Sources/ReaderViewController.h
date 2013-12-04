@@ -44,6 +44,8 @@
 
 @property (nonatomic, unsafe_unretained, readwrite) id <ReaderViewControllerDelegate> delegate;
 
+@property (nonatomic, strong) UIColor *pdfBackgroundColor;
+
 - (id)initWithReaderDocument:(ReaderDocument *)object;
 
 - (void)showDocumentPage:(NSInteger)page;
