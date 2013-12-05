@@ -569,6 +569,13 @@
 
 - (void)setCloseButton:(UIButton *)closeButton
 {
+    if (_closeButton)
+    {
+        if ([_closeButton superview])
+            [_closeButton removeFromSuperview];
+        _closeButton = nil;
+    }
+    
     _closeButton = closeButton;
     
     CGRect closeButtonFrame = _closeButton.frame;
