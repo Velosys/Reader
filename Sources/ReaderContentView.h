@@ -55,6 +55,7 @@
 - (void)zoomReset;
 
 - (void)setCloseButton:(UIButton *)closeButton;
+- (void)fadeOutCloseButton;
 
 @end
 

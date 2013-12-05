@@ -333,6 +333,11 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
     [theContentView setCloseButton:closeButton];
 }
 
+- (void)fadeOutCloseButton
+{
+    [theContentView fadeOutCloseButton];
+}
+
 @end
 
 #pragma mark -

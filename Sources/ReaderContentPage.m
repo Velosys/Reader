@@ -28,6 +28,10 @@
 #import "ReaderContentTile.h"
 #import "CGPDFDocument.h"
 
+@interface ReaderContentPage ()
+@property (nonatomic,strong) UIButton *closeButton;
+@end
+
 @implementation ReaderContentPage
 {
 	NSMutableArray *_links;
@@ -43,9 +47,6 @@
 
 	CGFloat _pageOffsetX;
 	CGFloat _pageOffsetY;
-    
-    // Velosys Addition
-    UIButton *_closeButton;
 }
 
 #pragma mark ReaderContentPage class methods
@@ -580,7 +581,8 @@
     
     _closeButton.alpha = 0.0f;
     
-    [self addSubview:_closeButton];
+    if (![_closeButton superview])
+        [self addSubview:_closeButton];
     
     [UIView animateWithDuration:0.3
                           delay:0.0
@@ -590,6 +592,20 @@
                      }
                      completion:nil];
 }
+
+- (void)fadeOutCloseButton
+{
+    [UIView animateWithDuration:0.3
+                          delay:0.0
+                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+                         self.closeButton.alpha = 0.0f;
+                     }
+                     completion:^(BOOL finished){
+                     }];
+    
+}
+
 @end
 
 #pragma mark -
