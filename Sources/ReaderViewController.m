@@ -281,6 +281,8 @@
 	document.lastOpen = [NSDate date]; // Update last opened date
 
 	isVisible = YES; // iOS present modal bodge
+    
+    [self addCloseButtonToVisiblePage];
 }
 
 #pragma mark UIViewController methods
@@ -345,6 +347,7 @@
 
 	[self.view addSubview:mainToolbar];
     
+    // Velosys Addition
     closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [closeButton setTitle:@"Close" forState:UIControlStateNormal];
     [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -353,7 +356,6 @@
     [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
     [closeButton setAlpha:0.8];
-    [self.view addSubview:closeButton];
 
 	CGRect pagebarRect = viewRect;
 	pagebarRect.size.height = PAGEBAR_HEIGHT;
@@ -516,32 +518,45 @@
 
 #pragma mark UIScrollViewDelegate methods
 
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    [UIView animateWithDuration:0.3
+                          delay:0.0 options:UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+                         closeButton.alpha = 0.0f;
+                     }
+                     completion:nil];
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
 	__block NSInteger page = -1;
-
+    
 	CGFloat contentOffsetX = scrollView.contentOffset.x;
-
+    
 	[contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
-		^(id key, id object, BOOL *stop)
-		{
-			ReaderContentView *contentView = object;
-
-			if (contentView.frame.origin.x == contentOffsetX)
-			{
-				page = contentView.tag; *stop = YES;
-			}
-		}
-	];
-
+     ^(id key, id object, BOOL *stop)
+     {
+         ReaderContentView *contentView = object;
+         
+         if (contentView.frame.origin.x == contentOffsetX)
+         {
+             [contentView setCloseButton:closeButton];
+             page = contentView.tag; *stop = YES;
+         }
+     }
+     ];
+    
 	if (page != -1) [self showDocumentPage:page]; // Show the page
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
 {
 	[self showDocumentPage:theScrollView.tag]; // Show page
-
+    
 	theScrollView.tag = 0; // Clear page number tag
+    
+    [self addCloseButtonToVisiblePage];
 }
 
 #pragma mark UIGestureRecognizerDelegate methods
@@ -1026,6 +1041,23 @@
         if ([mainPagebar superview])
             [mainPagebar removeFromSuperview];
     }
+}
+
+- (void)addCloseButtonToVisiblePage
+{
+    CGFloat contentOffsetX = theScrollView.contentOffset.x;
+    
+    [contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
+     ^(id key, id object, BOOL *stop)
+     {
+         ReaderContentView *contentView = object;
+         
+         if (contentView.frame.origin.x == contentOffsetX)
+         {
+             [contentView setCloseButton:closeButton];
+         }
+     }
+     ];
 }
 
 @end

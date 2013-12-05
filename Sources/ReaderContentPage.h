@@ -31,6 +31,8 @@
 
 - (id)processSingleTap:(UITapGestureRecognizer *)recognizer;
 
+- (void)setCloseButton:(UIButton *)closeButton;
+
 @end
 
 #pragma mark -

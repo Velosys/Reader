@@ -54,6 +54,8 @@
 - (void)zoomDecrement;
 - (void)zoomReset;
 
+- (void)setCloseButton:(UIButton *)closeButton;
+
 @end
 
 #pragma mark -

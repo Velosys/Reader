@@ -43,6 +43,9 @@
 
 	CGFloat _pageOffsetX;
 	CGFloat _pageOffsetY;
+    
+    // Velosys Addition
+    UIButton *_closeButton;
 }
 
 #pragma mark ReaderContentPage class methods
@@ -380,13 +383,18 @@
 - (id)processSingleTap:(UITapGestureRecognizer *)recognizer
 {
 	id result = nil; // Tap result object
-
+    
 	if (recognizer.state == UIGestureRecognizerStateRecognized)
 	{
+        CGPoint point = [recognizer locationInView:self];
+        
+        if (CGRectContainsPoint(_closeButton.frame, point))
+        {
+            [_closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+        }
+        
 		if (_links.count > 0) // Process the single tap
 		{
-			CGPoint point = [recognizer locationInView:self];
-
 			for (ReaderDocumentLink *link in _links) // Enumerate links
 			{
 				if (CGRectContainsPoint(link.rect, point) == true) // Found it
@@ -396,7 +404,7 @@
 			}
 		}
 	}
-
+    
 	return result;
 }
 
@@ -556,6 +564,32 @@
 	if (readerContentPage != nil) readerContentPage = nil; // Release self
 }
 
+#pragma mark - Velosys Additions
+
+- (void)setCloseButton:(UIButton *)closeButton
+{
+    _closeButton = closeButton;
+    
+    CGRect closeButtonFrame = _closeButton.frame;
+    
+    CGRect pageRect = CGPDFPageGetBoxRect(_PDFPageRef, kCGPDFArtBox);
+    
+    CGRect newCloseButtonFrame = CGRectMake(CGRectGetWidth(pageRect) - CGRectGetWidth(closeButtonFrame) - 10.0f, 10.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
+    
+    _closeButton.frame = newCloseButtonFrame;
+    
+    _closeButton.alpha = 0.0f;
+    
+    [self addSubview:_closeButton];
+    
+    [UIView animateWithDuration:0.3
+                          delay:0.0
+                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+                         _closeButton.alpha = 0.8f;
+                     }
+                     completion:nil];
+}
 @end
 
 #pragma mark -
