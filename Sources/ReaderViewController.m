@@ -270,6 +270,8 @@
 
 		currentPage = page; // Track current page number
 	}
+    
+    [self addCloseButtonToVisiblePage];
 }
 
 - (void)showDocument:(id)object
@@ -281,8 +283,6 @@
 	document.lastOpen = [NSDate date]; // Update last opened date
 
 	isVisible = YES; // iOS present modal bodge
-    
-    [self addCloseButtonToVisiblePage];
 }
 
 #pragma mark UIViewController methods
@@ -541,7 +541,10 @@
          
          if (contentView.frame.origin.x == contentOffsetX)
          {
-             [contentView setCloseButton:closeButton];
+             if ([closeButton superview] != contentView)
+             {
+                 [contentView setCloseButton:closeButton];
+             }
              page = contentView.tag; *stop = YES;
          }
      }
@@ -555,8 +558,6 @@
 	[self showDocumentPage:theScrollView.tag]; // Show page
     
 	theScrollView.tag = 0; // Clear page number tag
-    
-    [self addCloseButtonToVisiblePage];
 }
 
 #pragma mark UIGestureRecognizerDelegate methods
@@ -1006,12 +1007,12 @@
     if ([closeButton superview])
         [closeButton removeFromSuperview];
     
-    CGRect doneButtonFrame = closeButton.frame;
+    CGRect closeButtonFrame = closeButton.frame;
     
     closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
-    closeButton.frame = doneButtonFrame;
+    closeButton.frame = closeButtonFrame;
     [closeButton setImage:image forState:UIControlStateNormal];
     
     if (highlightImage)
@@ -1020,7 +1021,7 @@
     if (selectedImage)
         [closeButton setImage:selectedImage forState:UIControlStateSelected];
     
-    [self.view addSubview:closeButton];
+    [self addCloseButtonToVisiblePage];
 }
 
 - (void)setToolbarsEnabled:(BOOL)toolbarsEnabled
@@ -1054,7 +1055,10 @@
          
          if (contentView.frame.origin.x == contentOffsetX)
          {
-             [contentView setCloseButton:closeButton];
+             if ([closeButton superview] != contentView)
+             {
+                 [contentView setCloseButton:closeButton];
+             }
          }
      }
      ];
