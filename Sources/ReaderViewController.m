@@ -1006,29 +1006,31 @@
 
 - (void)addCloseButtonToVisiblePage
 {
-    UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    UIButton *closeButton;
     
     CGFloat closeButtonWidth;
     CGFloat closeButtonHeight;
     
     if (closeButtonImage)
     {
+        closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
         closeButtonWidth = closeButtonImage.size.width;
         closeButtonHeight = closeButtonImage.size.height;
         [closeButton setImage:closeButtonImage forState:UIControlStateNormal];
     }
     else
     {
+        closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
         closeButtonWidth = 72.0f;
         closeButtonHeight = 44.0f;
         [closeButton setTitle:@"Close" forState:UIControlStateNormal];
+        [closeButton setBackgroundColor:[UIColor lightGrayColor]];
+        [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
     }
     [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth, 0, closeButtonWidth, closeButtonHeight)];
     [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
-    [closeButton setBackgroundColor:[UIColor lightGrayColor]];
-    [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-    [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
     [closeButton setAlpha:0.8];
     
     CGFloat contentOffsetX = theScrollView.contentOffset.x;
