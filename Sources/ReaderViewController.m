@@ -1014,7 +1014,7 @@
         [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
     }
-    closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 26.0f : 6.0f;
+    closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 23.0f : 3.0f;
     
     [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - 6.0f, closeButtonY, closeButtonWidth, closeButtonHeight)];
     [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
