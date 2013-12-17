@@ -995,6 +995,7 @@
     
     CGFloat closeButtonWidth;
     CGFloat closeButtonHeight;
+    CGFloat closeButtonY;
     
     if (closeButtonImage)
     {
@@ -1013,7 +1014,9 @@
         [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
     }
-    [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth, 0, closeButtonWidth, closeButtonHeight)];
+    closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 20.0f : 0.0f;
+    
+    [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth, closeButtonY, closeButtonWidth, closeButtonHeight)];
     [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
     [closeButton setAlpha:0.8];
