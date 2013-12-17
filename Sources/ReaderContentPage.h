@@ -31,9 +31,6 @@
 
 - (id)processSingleTap:(UITapGestureRecognizer *)recognizer;
 
-- (void)setCloseButton:(UIButton *)closeButton;
-- (void)fadeOutCloseButton;
-
 @end
 
 #pragma mark -

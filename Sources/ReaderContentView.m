@@ -326,18 +326,6 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 	[super touchesMoved:touches withEvent:event]; // Message superclass
 }
 
-#pragma mark - Velosys Additions
-
-- (void)setCloseButton:(UIButton *)closeButton
-{
-    [theContentView setCloseButton:closeButton];
-}
-
-- (void)fadeOutCloseButton
-{
-    [theContentView fadeOutCloseButton];
-}
-
 @end
 
 #pragma mark -

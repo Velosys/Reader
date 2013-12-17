@@ -389,11 +389,6 @@
 	{
         CGPoint point = [recognizer locationInView:self];
         
-        if (CGRectContainsPoint(_closeButton.frame, point))
-        {
-            [_closeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
-        }
-        
 		if (_links.count > 0) // Process the single tap
 		{
 			for (ReaderDocumentLink *link in _links) // Enumerate links
@@ -563,54 +558,6 @@
 	CGContextDrawPDFPage(context, _PDFPageRef); // Render the PDF page into the context
 
 	if (readerContentPage != nil) readerContentPage = nil; // Release self
-}
-
-#pragma mark - Velosys Additions
-
-- (void)setCloseButton:(UIButton *)closeButton
-{
-    if (_closeButton)
-    {
-        if ([_closeButton superview])
-            [_closeButton removeFromSuperview];
-        _closeButton = nil;
-    }
-    
-    _closeButton = closeButton;
-    
-    CGRect closeButtonFrame = _closeButton.frame;
-    
-    CGRect pageRect = CGPDFPageGetBoxRect(_PDFPageRef, kCGPDFArtBox);
-    
-    CGRect newCloseButtonFrame = CGRectMake(CGRectGetWidth(pageRect) - CGRectGetWidth(closeButtonFrame) - 10.0f, 10.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
-    
-    _closeButton.frame = newCloseButtonFrame;
-    
-    _closeButton.alpha = 0.0f;
-    
-    if (![_closeButton superview])
-        [self addSubview:_closeButton];
-    
-    [UIView animateWithDuration:0.3
-                          delay:0.0
-                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-                         _closeButton.alpha = 0.8f;
-                     }
-                     completion:nil];
-}
-
-- (void)fadeOutCloseButton
-{
-    [UIView animateWithDuration:0.3
-                          delay:0.0
-                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-                         self.closeButton.alpha = 0.0f;
-                     }
-                     completion:^(BOOL finished){
-                     }];
-    
 }
 
 @end

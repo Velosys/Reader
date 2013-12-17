@@ -61,6 +61,8 @@
 	BOOL isVisible;
     
     UIImage *closeButtonImage;
+    
+    UIButton *closeButton;
 }
 
 #pragma mark Constants
@@ -270,8 +272,6 @@
 
 		currentPage = page; // Track current page number
 	}
-    
-    [self addCloseButtonToVisiblePage];
 }
 
 - (void)showDocument:(id)object
@@ -372,6 +372,8 @@
 	[singleTapOne requireGestureRecognizerToFail:doubleTapOne]; // Single tap requires double tap to fail
 
 	contentViews = [NSMutableDictionary new]; lastHideTime = [NSDate date];
+    
+    [self addCloseButton];
 }
 
 - (void)viewDidLayoutSubviews
@@ -491,24 +493,6 @@
 }
 
 #pragma mark UIScrollViewDelegate methods
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
-{
-    CGFloat contentOffsetX = scrollView.contentOffset.x;
-    
-    [contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
-     ^(id key, id object, BOOL *stop)
-     {
-         ReaderContentView *contentView = object;
-         
-         if (contentView.frame.origin.x == contentOffsetX)
-         {
-             [contentView fadeOutCloseButton];
-             *stop = YES;
-         }
-     }
-     ];
-}
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
@@ -969,7 +953,7 @@
 
 #pragma mark UI Customization Methods
 
-- (void)doneButtonTapped:(id)sender
+- (void)closeButtonTapped:(id)sender
 {
     [self tappedInToolbar:nil doneButton:sender];
 }
@@ -981,7 +965,7 @@
     
     closeButtonImage = image;
     
-    [self addCloseButtonToVisiblePage];
+    [self addCloseButton];
 }
 
 - (void)setToolbarsEnabled:(BOOL)toolbarsEnabled
@@ -1004,49 +988,40 @@
     }
 }
 
-- (void)addCloseButtonToVisiblePage
+- (void)addCloseButton
 {
-    UIButton *closeButton;
+    if ([closeButton superview])
+        [closeButton removeFromSuperview];
     
-    CGFloat closeButtonWidth;
-    CGFloat closeButtonHeight;
-    
-    if (closeButtonImage)
+    if (!closeButton)
     {
-        closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        closeButtonWidth = closeButtonImage.size.width;
-        closeButtonHeight = closeButtonImage.size.height;
-        [closeButton setImage:closeButtonImage forState:UIControlStateNormal];
+        CGFloat closeButtonWidth;
+        CGFloat closeButtonHeight;
+        
+        if (closeButtonImage)
+        {
+            closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+            closeButtonWidth = closeButtonImage.size.width;
+            closeButtonHeight = closeButtonImage.size.height;
+            [closeButton setImage:closeButtonImage forState:UIControlStateNormal];
+        }
+        else
+        {
+            closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+            closeButtonWidth = 72.0f;
+            closeButtonHeight = 44.0f;
+            [closeButton setTitle:@"Close" forState:UIControlStateNormal];
+            [closeButton setBackgroundColor:[UIColor lightGrayColor]];
+            [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+            [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
+        }
+        [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth, 0, closeButtonWidth, closeButtonHeight)];
+        [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        [closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
+        [closeButton setAlpha:0.8];
     }
-    else
-    {
-        closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        closeButtonWidth = 72.0f;
-        closeButtonHeight = 44.0f;
-        [closeButton setTitle:@"Close" forState:UIControlStateNormal];
-        [closeButton setBackgroundColor:[UIColor lightGrayColor]];
-        [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
-    }
-    [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth, 0, closeButtonWidth, closeButtonHeight)];
-    [closeButton addTarget:self action:@selector(doneButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
-    [closeButton setAlpha:0.8];
     
-    CGFloat contentOffsetX = theScrollView.contentOffset.x;
-    
-    [contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
-     ^(id key, id object, BOOL *stop)
-     {
-         ReaderContentView *contentView = object;
-         
-         if (contentView.frame.origin.x == contentOffsetX)
-         {
-             [contentView setCloseButton:closeButton];
-             *stop = YES;
-         }
-     }
-     ];
+    [self.view addSubview:closeButton];
 }
 
 @end
