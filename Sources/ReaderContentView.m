@@ -326,6 +326,13 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 	[super touchesMoved:touches withEvent:event]; // Message superclass
 }
 
+#pragma mark - Velosys Features
+
+- (void)becomeVisibleInView:(UIView *)view
+{
+    [theContentView becomeVisibleInView:view];
+}
+
 @end
 
 #pragma mark -

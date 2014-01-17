@@ -29,6 +29,7 @@
 
 @class ReaderViewController;
 
+
 @protocol ReaderViewControllerDelegate <NSObject>
 
 @required // Delegate protocols
@@ -40,11 +41,14 @@
 
 @end
 
+typedef enum {
+    ReaderCloseButtonStyleViewBoundsTopRight,
+    ReaderCloseButtonStylePageArtboxTopRight,
+} ReaderCloseButtonStyle;
+
 @interface ReaderViewController : UIViewController
 
 @property (nonatomic, unsafe_unretained, readwrite) id <ReaderViewControllerDelegate> delegate;
-
-@property (nonatomic, strong) UIColor *pdfBackgroundColor;
 
 - (id)initWithReaderDocument:(ReaderDocument *)object;
 
@@ -54,8 +58,14 @@
 
 - (void)setToolbarsVisible:(BOOL)toolbarsVisible;
 
-- (void)setCloseButtonImage:(UIImage *)image;
-
 - (void)setToolbarsEnabled:(BOOL)toolbarsEnabled;
+
+#pragma mark - Velosys Features
+
+@property (nonatomic, strong) UIImage *closeButtonImage;
+
+@property (nonatomic, assign) ReaderCloseButtonStyle closeButtonStyle;
+
+@property (nonatomic, strong) UIColor *pdfBackgroundColor;
 
 @end

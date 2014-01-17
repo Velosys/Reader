@@ -40,3 +40,10 @@
 #define READER_STANDALONE FALSE
 
 extern NSString *const kReaderCopyrightNotice;
+
+#pragma mark - Velosys
+
+// Sent from the ReaderContentPage with the new current page's frame
+extern NSString *const kReaderPageFrameForCurrentPageNotification;
+
+extern NSString *const kReaderPageFrameUserInfoKey;

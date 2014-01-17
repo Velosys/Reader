@@ -36,6 +36,9 @@
 
 @interface ReaderViewController () <UIScrollViewDelegate, UIGestureRecognizerDelegate, MFMailComposeViewControllerDelegate,
 									ReaderMainToolbarDelegate, ReaderMainPagebarDelegate, ReaderContentViewDelegate, ThumbsViewControllerDelegate>
+
+@property (nonatomic, strong) UIButton *closeButton;
+
 @end
 
 @implementation ReaderViewController
@@ -59,10 +62,6 @@
 	NSDate *lastHideTime;
 
 	BOOL isVisible;
-    
-    UIImage *closeButtonImage;
-    
-    UIButton *closeButton;
 }
 
 #pragma mark Constants
@@ -196,7 +195,6 @@
 
 				[unusedViews removeObjectForKey:key];
 			}
-
 			viewRect.origin.x += viewRect.size.width;
 		}
 
@@ -272,6 +270,7 @@
 
 		currentPage = page; // Track current page number
 	}
+    [self performSelector:@selector(initialCloseButtonPlacement) withObject:nil afterDelay:0.0];
 }
 
 - (void)showDocument:(id)object
@@ -493,6 +492,12 @@
 }
 
 #pragma mark UIScrollViewDelegate methods
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    if (self.closeButtonStyle == ReaderCloseButtonStylePageArtboxTopRight )
+        [self fadeOutCloseButton];
+}
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
@@ -963,7 +968,7 @@
     if (!image)
         return;
     
-    closeButtonImage = image;
+    _closeButtonImage = image;
     
     [self addCloseButton];
 }
@@ -990,38 +995,104 @@
 
 - (void)addCloseButton
 {
-    if ([closeButton superview])
-        [closeButton removeFromSuperview];
+    if ([_closeButton superview])
+        [_closeButton removeFromSuperview];
     
     CGFloat closeButtonWidth;
     CGFloat closeButtonHeight;
     CGFloat closeButtonY;
     
-    if (closeButtonImage)
+    if (_closeButtonImage)
     {
-        closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        closeButtonWidth = closeButtonImage.size.width;
-        closeButtonHeight = closeButtonImage.size.height;
-        [closeButton setImage:closeButtonImage forState:UIControlStateNormal];
+        _closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        closeButtonWidth = _closeButtonImage.size.width;
+        closeButtonHeight = _closeButtonImage.size.height;
+        [_closeButton setImage:_closeButtonImage forState:UIControlStateNormal];
     }
     else
     {
-        closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
         closeButtonWidth = 72.0f;
         closeButtonHeight = 44.0f;
-        [closeButton setTitle:@"Close" forState:UIControlStateNormal];
-        [closeButton setBackgroundColor:[UIColor lightGrayColor]];
-        [closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
+        [_closeButton setTitle:@"Close" forState:UIControlStateNormal];
+        [_closeButton setBackgroundColor:[UIColor lightGrayColor]];
+        [_closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [_closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
     }
     closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 23.0f : 3.0f;
     
-    [closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - 6.0f, closeButtonY, closeButtonWidth, closeButtonHeight)];
-    [closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
-    [closeButton setAlpha:0.8];
+    [_closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - 6.0f, closeButtonY, closeButtonWidth, closeButtonHeight)];
+    [_closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+    [_closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
     
-    [self.view addSubview:closeButton];
+    switch (self.closeButtonStyle) {
+        case ReaderCloseButtonStyleViewBoundsTopRight:
+            [_closeButton setAlpha:0.8];
+            break;
+        
+        case ReaderCloseButtonStylePageArtboxTopRight:
+            [_closeButton setAlpha:0.0];
+            [self addPageChangeObservers];
+            break;
+            
+        default:
+            break;
+    }
+    
+    [self.view addSubview:_closeButton];
 }
 
+- (void)addPageChangeObservers
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateCloseButton:) name:kReaderPageFrameForCurrentPageNotification object:nil];
+}
+
+- (void)initialCloseButtonPlacement
+{
+    CGFloat contentOffsetX = theScrollView.contentOffset.x;
+    
+    [contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
+     ^(id key, id object, BOOL *stop)
+     {
+         ReaderContentView *contentView = object;
+         
+         if (contentView.frame.origin.x == contentOffsetX)
+         {
+             [contentView becomeVisibleInView:self.view];
+             *stop = YES;
+         }
+     }
+     ];
+}
+
+- (void)updateCloseButton:(NSNotification *)notification
+{
+    NSDictionary *userInfo = notification.userInfo;
+    
+    CGRect pageRect = [userInfo[kReaderPageFrameUserInfoKey] CGRectValue];
+    CGRect closeButtonFrame = self.closeButton.frame;
+    
+    CGRect newCloseButtonFrame = CGRectMake(CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - 10.0f, 10.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
+    
+    self.closeButton.frame = newCloseButtonFrame;
+    NSLog(@"%@",NSStringFromCGRect(pageRect));
+    
+    _closeButton.alpha = 0.0f;
+    
+    [UIView animateWithDuration:0.3
+                          delay:0.0
+                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+                         _closeButton.alpha = 0.8f;
+                     }
+                     completion:nil];
+
+}
+
+- (void)fadeOutCloseButton
+{
+    [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState animations:^{
+        self.closeButton.alpha = 0.0;
+    } completion:nil];
+}
 @end

@@ -54,6 +54,10 @@
 - (void)zoomDecrement;
 - (void)zoomReset;
 
+#pragma mark - Velosys Features
+
+- (void)becomeVisibleInView:(UIView *)view;
+
 @end
 
 #pragma mark -
