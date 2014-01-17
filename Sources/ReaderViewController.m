@@ -373,7 +373,6 @@
 	contentViews = [NSMutableDictionary new]; lastHideTime = [NSDate date];
     
     [self addCloseButton];
-    [self addPageChangeObservers];
 }
 
 - (void)viewDidLayoutSubviews
@@ -496,7 +495,8 @@
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-    [self fadeOutCloseButton];
+    if (self.closeButtonStyle == ReaderCloseButtonStylePageArtboxTopRight )
+        [self fadeOutCloseButton];
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
@@ -1021,10 +1021,23 @@
     }
     closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 23.0f : 3.0f;
     
-    [_closeButton setFrame:CGRectMake(0, 0, closeButtonWidth, closeButtonHeight)];
+    [_closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - 6.0f, closeButtonY, closeButtonWidth, closeButtonHeight)];
     [_closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [_closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
-    [_closeButton setAlpha:0.0];
+    
+    switch (self.closeButtonStyle) {
+        case ReaderCloseButtonStyleViewBoundsTopRight:
+            [_closeButton setAlpha:0.8];
+            break;
+        
+        case ReaderCloseButtonStylePageArtboxTopRight:
+            [_closeButton setAlpha:0.0];
+            [self addPageChangeObservers];
+            break;
+            
+        default:
+            break;
+    }
     
     [self.view addSubview:_closeButton];
 }
