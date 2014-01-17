@@ -28,10 +28,6 @@
 #import "ReaderContentTile.h"
 #import "CGPDFDocument.h"
 
-@interface ReaderContentPage ()
-@property (nonatomic,strong) UIButton *closeButton;
-@end
-
 @implementation ReaderContentPage
 {
 	NSMutableArray *_links;
@@ -526,6 +522,8 @@
 	CGPDFPageRelease(_PDFPageRef), _PDFPageRef = NULL;
 
 	CGPDFDocumentRelease(_PDFDocRef), _PDFDocRef = NULL;
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 #if (READER_DISABLE_RETINA == TRUE) // Option
@@ -558,6 +556,20 @@
 	CGContextDrawPDFPage(context, _PDFPageRef); // Render the PDF page into the context
 
 	if (readerContentPage != nil) readerContentPage = nil; // Release self
+}
+
+#pragma mark - Velosys Features
+
+- (void)becomeVisibleInView:(UIView *)view
+{
+    CGRect pageRect = CGPDFPageGetBoxRect(_PDFPageRef, kCGPDFArtBox);
+    
+    pageRect = [self.superview convertRect:pageRect toView:view];
+    
+    NSValue *pageRectValue = [NSValue valueWithCGRect:pageRect];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReaderPageFrameForCurrentPageNotification
+                                                        object:nil
+                                                      userInfo:@{ kReaderPageFrameUserInfoKey : pageRectValue }];
 }
 
 @end
