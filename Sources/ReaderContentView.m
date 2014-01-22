@@ -276,6 +276,18 @@ static inline CGFloat ZoomScaleThatFits(CGSize target, CGSize source)
 
 #pragma mark UIScrollViewDelegate methods
 
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view
+{
+    if( [self.message respondsToSelector:@selector(contentViewWillBeginDragging:)] )
+        [self.message contentViewWillBeginZooming:self];
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    if( [self.message respondsToSelector:@selector(contentViewWillBeginDragging:)] )
+        [self.message contentViewWillBeginDragging:self];
+}
+
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
 {
     if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )

@@ -192,7 +192,8 @@
 
 		readerViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 		readerViewController.modalPresentationStyle = UIModalPresentationFullScreen;
-
+        readerViewController.closeButtonStyle = ReaderCloseButtonStylePageArtboxTopRight;
+        
 		[self presentModalViewController:readerViewController animated:YES];
 
 #endif // DEMO_VIEW_CONTROLLER_PUSH
