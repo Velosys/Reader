@@ -37,6 +37,8 @@
 
 - (void)contentView:(ReaderContentView *)contentView touchesBegan:(NSSet *)touches;
 - (void)contentView:(ReaderContentView *)contentView scrolledToOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale;
+- (void)contentViewWillBeginDragging:(ReaderContentView *)contentView;
+- (void)contentViewWillBeginZooming:(ReaderContentView *)contentView;
 
 @end
 

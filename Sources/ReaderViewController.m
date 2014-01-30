@@ -126,6 +126,8 @@
 	{
 		theScrollView.contentOffset = contentOffset; // Update content offset
 	}
+    
+    [self performSelector:@selector(initialCloseButtonPlacement) withObject:nil afterDelay:0.0];
 }
 
 - (void)updateToolbarBookmarkIcon
@@ -748,6 +750,8 @@
 {
     if( [self.delegate respondsToSelector:@selector(readerViewControllerContentOffsetChanged:zoomScale:)] )
         [self.delegate readerViewControllerContentOffsetChanged:offset zoomScale:zoomScale];
+    
+    [self positionCloseButtonForContentView:contentView scrollOffset:offset zoomScale:zoomScale];
 }
 
 - (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale
@@ -1067,12 +1071,34 @@
 
 - (void)updateCloseButton:(NSNotification *)notification
 {
+    CGFloat padding = 10.0f;
+    
     NSDictionary *userInfo = notification.userInfo;
     
     CGRect pageRect = [userInfo[kReaderPageFrameUserInfoKey] CGRectValue];
+    NSLog(@"Page Rect %@", NSStringFromCGRect(pageRect));
+    
     CGRect closeButtonFrame = self.closeButton.frame;
     
-    CGRect newCloseButtonFrame = CGRectMake(CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - 10.0f, 10.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
+    CGFloat originX;
+    NSLog(@"self.view.bounds = %@", NSStringFromCGRect(self.view.bounds));
+    UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+    NSLog(UIInterfaceOrientationIsLandscape(orientation) ? @"landscape" : @"portrait");
+    
+    if( CGRectGetWidth(pageRect) >= CGRectGetWidth(self.view.bounds) )
+    {
+        originX = CGRectGetWidth(self.view.bounds) - CGRectGetWidth(closeButtonFrame) - padding;
+    }
+    else
+    {
+        originX = CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - padding;
+    }
+//    CGFloat maxX = CGRectGetMaxX(self.view.frame) - CGRectGetWidth(closeButtonFrame) - padding;
+//    if( newX > maxX )
+//        newX = maxX;
+    
+    CGRect newCloseButtonFrame = CGRectMake(originX, 20.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
+    NSLog(@"New Close Button Frame %@", NSStringFromCGRect(newCloseButtonFrame));
     
     self.closeButton.frame = newCloseButtonFrame;
     
@@ -1094,4 +1120,23 @@
         self.closeButton.alpha = 0.0;
     } completion:nil];
 }
+
+#pragma mark - UIScrollView Zoom Delegate Methods
+
+- (void)contentViewWillBeginZooming:(ReaderContentView *)contentView
+{
+    [self fadeOutCloseButton];
+}
+
+- (void)contentViewWillBeginDragging:(ReaderContentView *)contentView
+{
+    [self fadeOutCloseButton];
+}
+
+- (void)positionCloseButtonForContentView:(ReaderContentView *)contentView scrollOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale
+{
+    NSLog(@"Scroll %@ contentOffset:%@ scrollOffset:%@ zoomScale:%f", contentView, NSStringFromCGPoint(contentView.contentOffset), NSStringFromCGPoint(offset), zoomScale);
+    [contentView becomeVisibleInView:self.view];
+}
+
 @end
