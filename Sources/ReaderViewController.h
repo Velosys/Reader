@@ -54,7 +54,7 @@ typedef enum {
 
 - (void)showDocumentPage:(NSInteger)page;
 
-- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale;
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated;
 
 - (void)setToolbarsVisible:(BOOL)toolbarsVisible;
 

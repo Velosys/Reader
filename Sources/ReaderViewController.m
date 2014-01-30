@@ -754,16 +754,14 @@
     [self positionCloseButtonForContentView:contentView scrollOffset:offset zoomScale:zoomScale];
 }
 
-- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated
 {
     NSInteger page = [document.pageNumber integerValue]; // Current page #
     NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
     ReaderContentView *targetView = [contentViews objectForKey:key];
     
-    [targetView setZoomScale:zoomScale animated:YES];
-    [targetView setContentOffset:contentOffset animated:YES];
-//    targetView.zoomScale = zoomScale;
-//    targetView.contentOffset = contentOffset;
+    [targetView setZoomScale:zoomScale animated:animated];
+    [targetView setContentOffset:contentOffset animated:animated];
 }
 
 - (void)setToolbarsVisible:(BOOL)toolbarsVisible
