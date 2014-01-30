@@ -1075,7 +1075,6 @@
     CGRect newCloseButtonFrame = CGRectMake(CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - 10.0f, 10.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
     
     self.closeButton.frame = newCloseButtonFrame;
-    NSLog(@"%@",NSStringFromCGRect(pageRect));
     
     _closeButton.alpha = 0.0f;
     
