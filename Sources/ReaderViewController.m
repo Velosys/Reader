@@ -73,6 +73,8 @@
 
 #define TAP_AREA_SIZE 48.0f
 
+#define CLOSE_BUTTON_PADDING ( UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation]) ? 10.0f : 4.0f )
+
 #pragma mark Properties
 
 @synthesize delegate;
@@ -1023,7 +1025,7 @@
     }
     closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 23.0f : 3.0f;
     
-    [_closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - 6.0f, closeButtonY, closeButtonWidth, closeButtonHeight)];
+    [_closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - CLOSE_BUTTON_PADDING, closeButtonY, closeButtonWidth, closeButtonHeight)];
     [_closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
     [_closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
     
@@ -1034,13 +1036,13 @@
         
         case ReaderCloseButtonStylePageArtboxTopRight:
             [_closeButton setAlpha:0.0];
-            [self addPageChangeObservers];
             break;
             
         default:
             break;
     }
     
+    [self addPageChangeObservers];
     [self.view addSubview:_closeButton];
 }
 
@@ -1069,34 +1071,43 @@
 
 - (void)updateCloseButton:(NSNotification *)notification
 {
-    CGFloat padding = 10.0f;
-    
     NSDictionary *userInfo = notification.userInfo;
     
     CGRect pageRect = [userInfo[kReaderPageFrameUserInfoKey] CGRectValue];
-    NSLog(@"Page Rect %@", NSStringFromCGRect(pageRect));
     
     CGRect closeButtonFrame = self.closeButton.frame;
     
     CGFloat originX;
-    NSLog(@"self.view.bounds = %@", NSStringFromCGRect(self.view.bounds));
-    UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-    NSLog(UIInterfaceOrientationIsLandscape(orientation) ? @"landscape" : @"portrait");
     
-    if( CGRectGetWidth(pageRect) >= CGRectGetWidth(self.view.bounds) )
-    {
-        originX = CGRectGetWidth(self.view.bounds) - CGRectGetWidth(closeButtonFrame) - padding;
+    switch (self.closeButtonStyle) {
+        case ReaderCloseButtonStyleViewBoundsTopRight:
+        {
+            originX = CGRectGetWidth(self.view.bounds) - CGRectGetWidth(closeButtonFrame) - CLOSE_BUTTON_PADDING;
+        }
+            break;
+            
+        case ReaderCloseButtonStylePageArtboxTopRight:
+        {
+            UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+            NSLog(UIInterfaceOrientationIsLandscape(orientation) ? @"landscape" : @"portrait");
+            
+            if( CGRectGetWidth(pageRect) >= CGRectGetWidth(self.view.bounds) )
+            {
+                originX = CGRectGetWidth(self.view.bounds) - CGRectGetWidth(closeButtonFrame) - CLOSE_BUTTON_PADDING;
+            }
+            else
+            {
+                originX = CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - CLOSE_BUTTON_PADDING;
+            }
+        }
+            break;
+            
+        default:
+            break;
     }
-    else
-    {
-        originX = CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - padding;
-    }
-//    CGFloat maxX = CGRectGetMaxX(self.view.frame) - CGRectGetWidth(closeButtonFrame) - padding;
-//    if( newX > maxX )
-//        newX = maxX;
+
     
     CGRect newCloseButtonFrame = CGRectMake(originX, 20.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
-    NSLog(@"New Close Button Frame %@", NSStringFromCGRect(newCloseButtonFrame));
     
     self.closeButton.frame = newCloseButtonFrame;
     
