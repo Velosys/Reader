@@ -72,11 +72,15 @@
 	{
 		CGFloat viewWidth = self.bounds.size.width;
 
+#if (READER_ENABLE_THUMBS == TRUE || READER_BOOKMARKS == TRUE || READER_ENABLE_MAIL == TRUE || READER_ENABLE_PRINT == TRUE) // Option
+        
 		UIImage *imageH = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Button-H.png"];
 		UIImage *imageN = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Button-N.png"];
-
+        
 		UIImage *buttonH = [imageH stretchableImageWithLeftCapWidth:5 topCapHeight:0];
 		UIImage *buttonN = [imageN stretchableImageWithLeftCapWidth:5 topCapHeight:0];
+        
+#endif
 
 		CGFloat titleX = BUTTON_X; CGFloat titleWidth = (viewWidth - (titleX + titleX));
 
