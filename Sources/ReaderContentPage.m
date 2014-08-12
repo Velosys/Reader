@@ -562,7 +562,7 @@
 
 - (void)becomeVisibleInView:(UIView *)view
 {
-    CGRect pageRect = CGPDFPageGetBoxRect(_PDFPageRef, kCGPDFArtBox);
+    CGRect pageRect = CGRectMake(0.0, 0.0, _pageWidth, _pageHeight);
     
     pageRect = [self.superview convertRect:pageRect toView:view];
     
