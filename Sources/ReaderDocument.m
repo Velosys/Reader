@@ -1,9 +1,9 @@
 //
 //	ReaderDocument.m
-//	Reader v2.6.1
+//	Reader v2.8.1
 //
 //	Created by Julius Oklamcak on 2011-07-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,16 @@
 #import "ReaderDocument.h"
 #import "CGPDFDocument.h"
 #import <fcntl.h>
+
+//
+//	Note: The code in this class assumes that PDF files live somewhere off of an
+//	application's ~/Documents directory. Since whenever an app is updated, its file
+//	path changes, we cannot store the full file path in the object archive, so we
+//	must store a relative file path and build up a full file path with it. As well,
+//	since as of iOS 8, the application's ~/Documents directory no longer lives in
+//	its bundle, any bundled PDF files must be copied into the the application's
+//	~/Documents directory before they can be accessed.
+//
 
 @implementation ReaderDocument
 {
@@ -52,7 +62,7 @@
 	NSURL *_fileURL;
 }
 
-#pragma mark Properties
+#pragma mark - Properties
 
 @synthesize guid = _guid;
 @synthesize fileDate = _fileDate;
@@ -64,8 +74,9 @@
 @synthesize password = _password;
 @synthesize filePath = _filePath;
 @dynamic fileName, fileURL;
+@dynamic canEmail, canExport, canPrint;
 
-#pragma mark ReaderDocument class methods
+#pragma mark - ReaderDocument class methods
 
 + (NSString *)GUID
 {
@@ -82,16 +93,11 @@
 
 + (NSString *)documentsPath
 {
-	NSArray *documentsPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
-	return [documentsPaths objectAtIndex:0]; // Path to the application's "~/Documents" directory
-}
+	NSURL *pathURL = [fileManager URLForDirectory:NSDocumentDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:NULL];
 
-+ (NSString *)applicationPath
-{
-	NSArray *documentsPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-
-	return [[documentsPaths objectAtIndex:0] stringByDeletingLastPathComponent]; // Strip "Documents" component
+	return [pathURL path]; // Path to the application's "~/Documents" directory
 }
 
 + (NSString *)applicationSupportPath
@@ -107,11 +113,11 @@
 {
 	assert(fullFilePath != nil); // Ensure that the full file path is not nil
 
-	NSString *applicationPath = [ReaderDocument applicationPath]; // Get the application path
+	NSString *documentsPath = [ReaderDocument documentsPath]; // Get the documents path
 
-	NSRange range = [fullFilePath rangeOfString:applicationPath]; // Look for the application path
+	NSRange range = [fullFilePath rangeOfString:documentsPath]; // Look for the documents path
 
-	assert(range.location != NSNotFound); // Ensure that the application path is in the full file path
+	assert(range.location != NSNotFound); // Ensure that the documents path is in the full file path
 
 	return [fullFilePath stringByReplacingCharactersInRange:range withString:@""]; // Strip it out
 }
@@ -196,23 +202,21 @@
 	return state;
 }
 
-#pragma mark ReaderDocument instance methods
+#pragma mark - ReaderDocument instance methods
 
-- (id)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase
+- (instancetype)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase
 {
-	id object = nil; // ReaderDocument object
-
-	if ([ReaderDocument isPDF:fullFilePath] == YES) // File must exist
+	if ((self = [super init])) // Initialize superclass first
 	{
-		if ((self = [super init])) // Initialize superclass object first
+		if ([ReaderDocument isPDF:fullFilePath] == YES) // Valid PDF
 		{
-			_guid = [ReaderDocument GUID]; // Create a document GUID
+			_guid = [ReaderDocument GUID]; // Create the document's GUID
 
 			_password = [phrase copy]; // Keep copy of any document password
 
 			_bookmarks = [NSMutableIndexSet new]; // Bookmarked pages index set
 
-			_pageNumber = [NSNumber numberWithInteger:1]; // Start on page 1
+			_pageNumber = [NSNumber numberWithInteger:1]; // Start on page one
 
             _filePath = fullFilePath;
             
@@ -224,9 +228,9 @@
             
 			CFURLRef docURLRef = (__bridge CFURLRef)[self fileURL]; // CFURLRef from NSURL
 
-			CGPDFDocumentRef thePDFDocRef = CGPDFDocumentCreateX(docURLRef, _password);
+			CGPDFDocumentRef thePDFDocRef = CGPDFDocumentCreateUsingUrl(docURLRef, _password);
 
-			if (thePDFDocRef != NULL) // Get the number of pages in the document
+			if (thePDFDocRef != NULL) // Get the total number of pages in the document
 			{
 				NSInteger pageCount = CGPDFDocumentGetNumberOfPages(thePDFDocRef);
 
@@ -239,9 +243,9 @@
 				NSAssert(NO, @"CGPDFDocumentRef == NULL");
 			}
 
-			NSFileManager *fileManager = [NSFileManager new]; // File manager instance
+			_lastOpen = [NSDate dateWithTimeIntervalSinceReferenceDate:0.0];
 
-			_lastOpen = [NSDate dateWithTimeIntervalSinceReferenceDate:0.0]; // Last opened
+			NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
 			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:fullFilePath error:NULL];
 
@@ -249,13 +253,15 @@
 
 			_fileSize = [fileAttributes objectForKey:NSFileSize]; // File size (bytes)
 
-//			[self saveReaderDocument]; // Save the ReaderDocument object
-
-			object = self; // Return initialized ReaderDocument object
+//            [self archiveDocumentProperties]; // Archive ReaderDocument object
+		}
+		else // Not a valid PDF file
+		{
+			self = nil;
 		}
 	}
 
-	return object;
+	return self;
 }
 
 - (NSString *)fileName
@@ -273,19 +279,29 @@
 	return _fileURL;
 }
 
-- (BOOL)archiveWithFileName:(NSString *)filename
+- (BOOL)canEmail
 {
-	NSString *archiveFilePath = [ReaderDocument archiveFilePath:filename];
+	return YES;
+}
+
+- (BOOL)canExport
+{
+	return YES;
+}
+
+- (BOOL)canPrint
+{
+	return YES;
+}
+
+- (BOOL)archiveDocumentProperties
+{
+	NSString *archiveFilePath = [ReaderDocument archiveFilePath:[self fileName]];
 
 	return [NSKeyedArchiver archiveRootObject:self toFile:archiveFilePath];
 }
 
-- (void)saveReaderDocument
-{
-	[self archiveWithFileName:[self fileName]];
-}
-
-- (void)updateProperties
+- (void)updateDocumentProperties
 {
 	CFURLRef docURLRef = (__bridge CFURLRef)self.fileURL; // File URL
 
@@ -308,10 +324,10 @@
 
 	_fileDate = [fileAttributes objectForKey:NSFileModificationDate]; // File date
 
-	_fileSize = [fileAttributes objectForKey:NSFileSize]; // File size
+	_fileSize = [fileAttributes objectForKey:NSFileSize]; // File size (bytes)
 }
 
-#pragma mark NSCoding protocol methods
+#pragma mark - NSCoding protocol methods
 
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
@@ -334,7 +350,7 @@
     [encoder encodeObject:_filePath forKey:@"FilePath"];
 }
 
-- (id)initWithCoder:(NSCoder *)decoder
+- (instancetype)initWithCoder:(NSCoder *)decoder
 {
 	if ((self = [super init])) // Superclass init
 	{

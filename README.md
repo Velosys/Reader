@@ -9,17 +9,17 @@ screens.
 
 The code is universal and does not require any XIBs (as all UI
 elements are code generated, allowing for greatest flexibility).
-It runs on iPad, iPhone and iPod touch with iOS 4.0 and up. Also
+It runs on iPad, iPhone and iPod touch with iOS 6.0 and up. Also
 supported are the Retina displays in all new devices and is ready
 to be fully internationalized. The idea was to provide a complete
 project template that you could start building from, or, just pull
 the required files into an existing project to enable PDF
 reading/viewing in your app(s).
 
-![iPod Page](http://i.imgur.com/wxC1B.png)<p></p>
-![iPod Thumbs](http://i.imgur.com/4VNyQ.png)<p></p>
-![iPad Page](http://i.imgur.com/T6nfI.png)<p></p>
-![iPad Thumbs](http://i.imgur.com/wxQRC.png)
+![iPod Page](http://i.imgur.com/GbjEQiC.png)<p></p>
+![iPod Thumbs](http://i.imgur.com/kE5B5mb.png)<p></p>
+![iPad Page](http://i.imgur.com/C7ULYUk.png)<p></p>
+![iPad Thumbs](http://i.imgur.com/jc5PWth.png)
 
 After launching the sample app, tap on the left hand side of the
 screen to go back a page. Tap on the right hand side to go to the
@@ -32,7 +32,7 @@ This implementation has been tested with large PDF files (over
 250MB in size and over 2800 pages in length) and with PDF files of
 all flavors (from text only documents to graphics heavy magazines).
 It also works rather well on older devices (such as the iPod touch
-2nd generation and iPhone 3G) and takes advantage of the dual-core
+4th generation and iPhone 3GS) and takes advantage of the dual-core
 processor (via CATiledLayer and multi-threading) in new devices.
 
 To see an example open source PDF Viewer App that uses this code
@@ -46,16 +46,16 @@ Multithreaded: The UI is always quite smooth and responsive.
 Supports:
 
  - iBooks-like document navigation.
- - Device rotation and all orientations.¹
+ - Device rotation and all orientations.
  - Encrypted (password protected) PDFs.
  - PDF links (URI and go to page).
  - PDFs with rotated pages.
 
 ### Notes
 
-Version 2.x of the PDF reader code was originally developed and
-tested under Xcode 3.2.6, LLVM 1.7, iOS 4.3.5 and iOS 4.2.1 with
-current development and testing under Xcode 4.6.2, LLVM 4.2, iOS 6.
+Version 2.x of the PDF reader code was originally developed
+and tested under Xcode 3.2.6, LLVM 1.7 and iOS 4 with current
+development and testing under Xcode 6.0, LLVM 6.0 and iOS 8.
 Please note that as of v2.6, the code was refactored to use ARC.
 
 The overall PDF reader functionality is encapsulated in the
@@ -74,8 +74,7 @@ Please note that since ReaderViewController implements its own
 toolbar, you need to hide the UINavigationController navigation
 bar before pushing it and then show the navigation bar after
 popping it. The ReaderDemoController class shows how this is
-done with a bundled PDF file. To create a 'book as an app',
-please see the ReaderBookDelegate class.
+done with a bundled PDF file.
 
 ### Required Files
 
@@ -105,6 +104,7 @@ reader into one of your projects:
 	Reader-Button-H.png, Reader-Button-H@2x.png
 	Reader-Button-N.png, Reader-Button-N@2x.png
 	Reader-Email.png, Reader-Email@2x.png
+	Reader-Export.png, Reader-Export@2x.png
 	Reader-Mark-N.png, Reader-Mark-N@2x.png
 	Reader-Mark-Y.png, Reader-Mark-Y@2x.png
 	Reader-Print.png, Reader-Print@2x.png
@@ -123,26 +123,13 @@ all of the following iOS frameworks are required:
 
 In ReaderConstants.h the following #define options are available:
 
-`READER_BOOKMARKS` - If TRUE, enables page bookmark support.
-
-`READER_ENABLE_MAIL` - If TRUE, an email button is added to the toolbar
-(if the device is properly configured for email support).
-
-`READER_ENABLE_PRINT` - If TRUE, a print button is added to the toolbar
-(if printing is supported and available on the device).
-
-`READER_ENABLE_THUMBS` - If TRUE, a thumbs button is added to the toolbar
-(enabling page thumbnail document navigation).
-
-`READER_DISABLE_IDLE` - If TRUE, the iOS idle timer is disabled while
-viewing a document (beware of battery drain).
+`READER_FLAT_UI` - If TRUE, follows the Fuglyosity of Flat Fad.
 
 `READER_SHOW_SHADOWS` - If TRUE, a shadow is shown around each page
-and the page content is inset by a couple of extra points.
+and page thumbnail.
 
-`READER_STANDALONE` - If FALSE, a "Done" button is added to the toolbar
-and the -dismissReaderViewController: delegate method is messaged when
-it is tapped.
+`READER_ENABLE_THUMBS` - If TRUE, a thumbs button is added to the main
+toolbar enabling page thumbnail document navigation.
 
 `READER_DISABLE_RETINA` - If TRUE, sets the CATiledLayer contentScale
 to 1.0f. This effectively disables retina support and results in
@@ -151,6 +138,15 @@ the loss of retina display quality.
 
 `READER_ENABLE_PREVIEW` - If TRUE, a medium resolution page thumbnail
 is displayed before the CATiledLayer starts to render the PDF page.
+
+`READER_DISABLE_IDLE` - If TRUE, the iOS idle timer is disabled while
+viewing a document (beware of battery drain).
+
+`READER_STANDALONE` - If FALSE, a "Done" button is added to the toolbar
+and the -dismissReaderViewController: delegate method is messaged when
+it is tapped.
+
+`READER_BOOKMARKS` - If TRUE, enables page bookmark support.
 
 ### ReaderDocument Archiving
 
@@ -161,18 +157,13 @@ of the ReaderDocument object for a document is mandatory since this is
 where the current page number, bookmarks and directory of the document
 page thumb cache is kept.
 
-### Caveats
-
-¹ There appears to be a bug in iOS 4 with its view controller rotation
-handling when a modal view controller is presented in landscape from a
-modal view controller when the status bar is visible on iPhone and iPod
-touch. The good news is that iOS 5 appears to have fixed this bug.
-
 ### Contact Info
 
 Website: [http://www.vfr.org/](http://www.vfr.org/)
 
 Email: joklamcak(at)gmail(dot)com
+
+Twitter: @joklamcak
 
 If you find this code useful, or wish to fund further development,
 you can use PayPal to donate to the vfr-Reader project:

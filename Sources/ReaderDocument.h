@@ -1,9 +1,9 @@
 //
 //	ReaderDocument.h
-//	Reader v2.6.0
+//	Reader v2.8.1
 //
 //	Created by Julius Oklamcak on 2011-07-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -39,14 +39,20 @@
 @property (nonatomic, strong, readonly) NSURL *fileURL;
 @property (nonatomic, strong, readonly) NSString *filePath;
 
+@property (nonatomic, readonly) BOOL canEmail;
+@property (nonatomic, readonly) BOOL canExport;
+@property (nonatomic, readonly) BOOL canPrint;
+
++ (NSString *)documentsPath;
+
 + (ReaderDocument *)withDocumentFilePath:(NSString *)filename password:(NSString *)phrase;
 
 + (ReaderDocument *)unarchiveFromFileName:(NSString *)filename password:(NSString *)phrase;
 
-- (id)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase;
+- (instancetype)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase;
 
-- (void)saveReaderDocument;
+- (BOOL)archiveDocumentProperties;
 
-- (void)updateProperties;
+- (void)updateDocumentProperties;
 
 @end
