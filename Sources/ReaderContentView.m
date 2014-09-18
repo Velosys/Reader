@@ -27,6 +27,7 @@
 #import "ReaderContentView.h"
 #import "ReaderContentPage.h"
 #import "ReaderThumbCache.h"
+#import "ReaderDocument.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -79,7 +80,13 @@ static inline CGFloat zoomScaleThatFits(CGSize target, CGSize source)
 
 - (void)updateMinimumMaximumZoom
 {
-	CGFloat zoomScale = zoomScaleThatFits(self.bounds.size, theContentPage.bounds.size);
+    CGSize boundingSize = self.bounds.size;
+    NSString *versionString = [[UIDevice currentDevice] systemVersion];
+    NSUInteger systemMajorVersion = (NSUInteger)floor([versionString doubleValue]);
+    if( systemMajorVersion >= 7 )
+        boundingSize.height -= 64.0;
+    
+	CGFloat zoomScale = zoomScaleThatFits(boundingSize, theContentPage.bounds.size);
 
 	self.minimumZoomScale = zoomScale; self.maximumZoomScale = (zoomScale * ZOOM_MAXIMUM);
 
@@ -92,11 +99,19 @@ static inline CGFloat zoomScaleThatFits(CGSize target, CGSize source)
 
 	CGSize boundsSize = self.bounds.size; CGSize contentSize = self.contentSize; // Sizes
 
+    NSString *versionString = [[UIDevice currentDevice] systemVersion];
+    NSUInteger systemMajorVersion = (NSUInteger)floor([versionString doubleValue]);
+    if( systemMajorVersion >= 7 )
+        boundsSize.height -= 64.0;
+    
 	if (contentSize.width < boundsSize.width) iw = ((boundsSize.width - contentSize.width) * 0.5f);
 
 	if (contentSize.height < boundsSize.height) ih = ((boundsSize.height - contentSize.height) * 0.5f);
 
 	UIEdgeInsets insets = UIEdgeInsetsMake(ih, iw, ih, iw); // Create (possibly updated) content insets
+
+    if( systemMajorVersion >= 7 )
+        insets.top += 64.0;
 
 	if (UIEdgeInsetsEqualToEdgeInsets(self.contentInset, insets) == false) self.contentInset = insets;
 }
@@ -204,13 +219,13 @@ static inline CGFloat zoomScaleThatFits(CGSize target, CGSize source)
 	}
 }
 
-- (void)showPageThumb:(NSURL *)fileURL page:(NSInteger)page password:(NSString *)phrase guid:(NSString *)guid
+- (void)showPageThumb:(ReaderDocument *)document page:(NSInteger)page
 {
 #if (READER_ENABLE_PREVIEW == TRUE) // Option
 
 	CGSize size = ((userInterfaceIdiom == UIUserInterfaceIdiomPad) ? CGSizeMake(PAGE_THUMB_LARGE, PAGE_THUMB_LARGE) : CGSizeMake(PAGE_THUMB_SMALL, PAGE_THUMB_SMALL));
 
-	ReaderThumbRequest *request = [ReaderThumbRequest newForView:theThumbView fileURL:fileURL password:phrase guid:guid page:page size:size];
+	ReaderThumbRequest *request = [ReaderThumbRequest newForView:theThumbView document:document page:page size:size];
 
 	UIImage *image = [[ReaderThumbCache sharedInstance] thumbRequest:request priority:YES]; // Request the page thumb
 

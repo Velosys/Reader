@@ -34,6 +34,9 @@
 @property (nonatomic, strong, readonly) NSNumber *pageCount;
 @property (nonatomic, strong, readwrite) NSNumber *pageNumber;
 @property (nonatomic, strong, readonly) NSMutableIndexSet *bookmarks;
+@property (nonatomic, strong, readonly) NSString *filePath;
+@property (nonatomic, strong, readonly) NSString *archivePath;
+@property (nonatomic, strong, readonly) NSString *cachePath;
 @property (nonatomic, strong, readonly) NSString *fileName;
 @property (nonatomic, strong, readonly) NSString *password;
 @property (nonatomic, strong, readonly) NSURL *fileURL;
@@ -44,11 +47,11 @@
 
 + (NSString *)documentsPath;
 
-+ (ReaderDocument *)withDocumentFilePath:(NSString *)filename password:(NSString *)phrase;
++ (ReaderDocument *)withDocumentFilePath:(NSString *)filename archivePath:(NSString *)archivePath cachePath:(NSString *)cachePath password:(NSString *)phrase;
 
-+ (ReaderDocument *)unarchiveFromFileName:(NSString *)filename password:(NSString *)phrase;
++ (ReaderDocument *)unarchiveFromPath:(NSString *)archivePath password:(NSString *)phrase;
 
-- (instancetype)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase;
+- (instancetype)initWithFilePath:(NSString *)fullFilePath archivePath:(NSString *)archivePath cachePath:(NSString *)cachePath password:(NSString *)phrase;
 
 - (BOOL)archiveDocumentProperties;
 

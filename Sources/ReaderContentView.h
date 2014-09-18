@@ -30,6 +30,7 @@
 @class ReaderContentView;
 @class ReaderContentPage;
 @class ReaderContentThumb;
+@class ReaderDocument;
 
 @protocol ReaderContentViewDelegate <NSObject>
 
@@ -45,7 +46,7 @@
 
 - (instancetype)initWithFrame:(CGRect)frame fileURL:(NSURL *)fileURL page:(NSUInteger)page password:(NSString *)phrase;
 
-- (void)showPageThumb:(NSURL *)fileURL page:(NSInteger)page password:(NSString *)phrase guid:(NSString *)guid;
+- (void)showPageThumb:(ReaderDocument *)document page:(NSInteger)page;
 
 - (id)processSingleTap:(UITapGestureRecognizer *)recognizer;
 

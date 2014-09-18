@@ -27,6 +27,7 @@
 #import "ReaderThumbCache.h"
 #import "ReaderThumbView.h"
 #import "CGPDFDocument.h"
+#import "ReaderDocument.h"
 
 #import <ImageIO/ImageIO.h>
 
@@ -39,7 +40,7 @@
 
 - (instancetype)initWithRequest:(ReaderThumbRequest *)options
 {
-	if ((self = [super initWithGUID:options.guid]))
+	if ((self = [super initWithGUID:options.document.guid]))
 	{
 		request = options;
 	}
@@ -62,9 +63,9 @@
 {
 	NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
-	NSString *cachePath = [ReaderThumbCache thumbCachePathForGUID:request.guid]; // Thumb cache path
+	NSString *cachePath = [ReaderThumbCache thumbCachePathForDocument:request.document]; // Thumb cache path
 
-	[fileManager createDirectoryAtPath:cachePath withIntermediateDirectories:NO attributes:nil error:NULL];
+	[fileManager createDirectoryAtPath:cachePath withIntermediateDirectories:YES attributes:nil error:NULL];
 
 	NSString *fileName = [[NSString alloc] initWithFormat:@"%@.png", request.thumbName]; // Thumb file name
 
@@ -73,9 +74,9 @@
 
 - (void)main
 {
-	NSInteger page = request.thumbPage; NSString *password = request.password;
+	NSInteger page = request.thumbPage; NSString *password = request.document.password;
 
-	CGImageRef imageRef = NULL; CFURLRef fileURL = (__bridge CFURLRef)request.fileURL;
+	CGImageRef imageRef = NULL; CFURLRef fileURL = (__bridge CFURLRef)request.document.fileURL;
 
 	CGPDFDocumentRef thePDFDocRef = CGPDFDocumentCreateUsingUrl(fileURL, password);
 

@@ -288,7 +288,7 @@
 
 	NSURL *fileURL = document.fileURL; NSString *guid = document.guid; NSString *phrase = document.password; // Document info
 
-	ReaderThumbRequest *thumbRequest = [ReaderThumbRequest newForView:thumbCell fileURL:fileURL password:phrase guid:guid page:page size:size];
+	ReaderThumbRequest *thumbRequest = [ReaderThumbRequest newForView:thumbCell document:document page:page size:size];
 
 	UIImage *image = [[ReaderThumbCache sharedInstance] thumbRequest:thumbRequest priority:YES]; // Request the thumbnail
 
@@ -420,7 +420,7 @@
 
 		[imageView addSubview:tintView];
 
-		UIImage *image = [UIImage imageNamed:@"Reader-Mark-Y"];
+		UIImage *image = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Mark-Y.png"];
 
 		bookMark = [[UIImageView alloc] initWithImage:image];
 

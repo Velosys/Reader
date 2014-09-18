@@ -27,6 +27,7 @@
 #import "ReaderThumbRender.h"
 #import "ReaderThumbCache.h"
 #import "ReaderThumbView.h"
+#import "ReaderDocument.h"
 
 #import <ImageIO/ImageIO.h>
 
@@ -39,7 +40,7 @@
 
 - (instancetype)initWithRequest:(ReaderThumbRequest *)options
 {
-	if ((self = [super initWithGUID:options.guid]))
+	if ((self = [super initWithGUID:options.document.guid]))
 	{
 		request = options;
 	}
@@ -60,7 +61,7 @@
 
 - (NSURL *)thumbFileURL
 {
-	NSString *cachePath = [ReaderThumbCache thumbCachePathForGUID:request.guid]; // Thumb cache path
+	NSString *cachePath = [ReaderThumbCache thumbCachePathForDocument:request.document]; // Thumb cache path
 
 	NSString *fileName = [[NSString alloc] initWithFormat:@"%@.png", request.thumbName]; // Thumb file name
 

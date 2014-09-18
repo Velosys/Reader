@@ -27,19 +27,19 @@
 
 #import "ReaderThumbRequest.h"
 
+@class ReaderDocument;
+
 @interface ReaderThumbCache : NSObject <NSObject>
 
 + (ReaderThumbCache *)sharedInstance;
 
-+ (void)touchThumbCacheWithGUID:(NSString *)guid;
++ (void)touchThumbCacheForDocument:(ReaderDocument *)document;
 
-+ (void)createThumbCacheWithGUID:(NSString *)guid;
++ (void)createThumbCacheForDocument:(ReaderDocument *)document;
 
-+ (void)removeThumbCacheWithGUID:(NSString *)guid;
++ (void)removeThumbCacheForDocument:(ReaderDocument *)document;
 
-+ (void)purgeThumbCachesOlderThan:(NSTimeInterval)age;
-
-+ (NSString *)thumbCachePathForGUID:(NSString *)guid;
++ (NSString *)thumbCachePathForDocument:(ReaderDocument *)document;
 
 - (id)thumbRequest:(ReaderThumbRequest *)request priority:(BOOL)priority;
 

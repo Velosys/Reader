@@ -114,7 +114,6 @@
 	NSInteger page = currentPage; // Update scroll view offset to current page
 
 	CGPoint contentOffset = CGPointMake((scrollView.bounds.size.width * (page - 1)), 0.0f);
-
 	if (CGPointEqualToPoint(scrollView.contentOffset, contentOffset) == false) // Update
 	{
 		scrollView.contentOffset = contentOffset; // Update content offset
@@ -131,13 +130,13 @@
 
 	viewRect.origin.x = (viewRect.size.width * (page - 1)); viewRect = CGRectInset(viewRect, scrollViewOutset, 0.0f);
 
-	NSURL *fileURL = document.fileURL; NSString *phrase = document.password; NSString *guid = document.guid; // Document properties
+	NSURL *fileURL = document.fileURL; NSString *phrase = document.password; // Document properties
 
 	ReaderContentView *contentView = [[ReaderContentView alloc] initWithFrame:viewRect fileURL:fileURL page:page password:phrase]; // ReaderContentView
 
 	contentView.message = self; [contentViews setObject:contentView forKey:[NSNumber numberWithInteger:page]]; [scrollView addSubview:contentView];
 
-	[contentView showPageThumb:fileURL page:page password:phrase guid:guid]; // Request page preview thumb
+	[contentView showPageThumb:document page:page]; // Request page preview thumb
 }
 
 - (void)layoutContentViews:(UIScrollView *)scrollView
@@ -290,6 +289,14 @@
 {
 	if ((self = [super initWithNibName:nil bundle:nil])) // Initialize superclass
 	{
+        UIBarButtonItem *doneBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(doneButtonSelected:)];
+        [self.navigationItem setLeftBarButtonItem:doneBarButtonItem];
+        
+        UIImage *printImage = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Print"];
+        UIBarButtonItem *emailBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(emailButtonSelected:)];
+        UIBarButtonItem *printBarButtonItem = [[UIBarButtonItem alloc] initWithImage:printImage style:UIBarButtonItemStylePlain target:self action:@selector(printButtonSelected:)];
+        [self.navigationItem setRightBarButtonItems:@[printBarButtonItem, emailBarButtonItem]];
+        
 		if ((object != nil) && ([object isKindOfClass:[ReaderDocument class]])) // Valid object
 		{
 			userInterfaceIdiom = [UIDevice currentDevice].userInterfaceIdiom; // User interface idiom
@@ -304,7 +311,7 @@
 
 			[object updateDocumentProperties]; document = object; // Retain the supplied ReaderDocument object for our use
 
-			[ReaderThumbCache touchThumbCacheWithGUID:object.guid]; // Touch the document thumb cache directory
+			[ReaderThumbCache touchThumbCacheForDocument:document]; // Touch the document thumb cache directory
 		}
 		else // Invalid ReaderDocument object
 		{
@@ -332,6 +339,8 @@
 
 	if ([self respondsToSelector:@selector(edgesForExtendedLayout)]) // iOS 7+
 	{
+        self.automaticallyAdjustsScrollViewInsets = NO;
+        
 		if ([self prefersStatusBarHidden] == NO) // Visible status bar
 		{
 			CGRect statusBarRect = viewRect; statusBarRect.size.height = STATUS_HEIGHT;
@@ -355,9 +364,9 @@
 	[self.view addSubview:theScrollView];
 
 	CGRect toolbarRect = viewRect; toolbarRect.size.height = TOOLBAR_HEIGHT;
-	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // ReaderMainToolbar
-	mainToolbar.delegate = self; // ReaderMainToolbarDelegate
-	[self.view addSubview:mainToolbar];
+//	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // ReaderMainToolbar
+//	mainToolbar.delegate = self; // ReaderMainToolbarDelegate
+//	[self.view addSubview:mainToolbar];
 
 	CGRect pagebarRect = self.view.bounds; pagebarRect.size.height = PAGEBAR_HEIGHT;
 	pagebarRect.origin.y = (self.view.bounds.size.height - pagebarRect.size.height);
@@ -750,7 +759,7 @@
 	[documentInteraction presentOpenInMenuFromRect:button.bounds inView:button animated:YES];
 }
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(UIButton *)button
+- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(id)sender
 {
 	if ([UIPrintInteractionController isPrintingAvailable] == YES)
 	{
@@ -771,14 +780,30 @@
 
 			if (userInterfaceIdiom == UIUserInterfaceIdiomPad) // Large device printing
 			{
-				[printInteraction presentFromRect:button.bounds inView:button animated:YES completionHandler:
-					^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
-					{
-						#ifdef DEBUG
-							if ((completed == NO) && (error != nil)) NSLog(@"%s %@", __FUNCTION__, error);
-						#endif
-					}
-				];
+                if( [sender isKindOfClass:[UIButton class]] )
+                {
+                    UIButton *button = (UIButton *)sender;
+                    [printInteraction presentFromRect:button.bounds inView:button animated:YES completionHandler:
+                        ^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
+                        {
+                            #ifdef DEBUG
+                                if ((completed == NO) && (error != nil)) NSLog(@"%s %@", __FUNCTION__, error);
+                            #endif
+                        }
+                    ];
+                }
+                else if( [sender isKindOfClass:[UIBarButtonItem class]] )
+                {
+                    UIBarButtonItem *barButtonItem = (UIBarButtonItem *)sender;
+                    [printInteraction presentFromBarButtonItem:barButtonItem animated:YES completionHandler:
+                         ^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
+                         {
+                            #ifdef DEBUG
+                                 if ((completed == NO) && (error != nil)) NSLog(@"%s %@", __FUNCTION__, error);
+                            #endif
+                         }
+                     ];
+                }
 			}
 			else // Handle printing on small device
 			{
@@ -897,6 +922,23 @@
 	[document archiveDocumentProperties]; // Save any ReaderDocument changes
 
 	if (userInterfaceIdiom == UIUserInterfaceIdiomPad) if (printInteraction != nil) [printInteraction dismissAnimated:NO];
+}
+
+#pragma mark - Navigation Actions
+
+- (void)doneButtonSelected:(id)sender
+{
+    [self closeDocument];
+}
+
+- (void)emailButtonSelected:(id)sender
+{
+    [self tappedInToolbar:nil emailButton:nil];
+}
+
+- (void)printButtonSelected:(id)sender
+{
+    [self tappedInToolbar:nil printButton:sender];
 }
 
 @end
