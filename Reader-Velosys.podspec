@@ -13,5 +13,4 @@ Pod::Spec.new do |s|
 	s.source_files = 'Sources/*.{h,m}'
 	s.requires_arc = true
 	s.resource = 'Graphics/Reader-Resources.bundle'
-	s.dependency 'VSKit/Utilities'
 end

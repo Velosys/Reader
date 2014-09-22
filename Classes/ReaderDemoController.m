@@ -187,7 +187,12 @@
 
 	NSString *filePath = [documentsPath stringByAppendingPathComponent:fileName];
 
-	ReaderDocument *document = [ReaderDocument withDocumentFilePath:filePath password:phrase];
+	ReaderDocument *document = [ReaderDocument withDocumentFilePath:filePath
+                                                        archivePath:nil
+                                                          cachePath:nil
+                                               relativeToSearchPath:NSLibraryDirectory
+                                                   searchPathDomain:NSUserDomainMask
+                                                           password:phrase];
 
 	if (document != nil) // Must have a valid ReaderDocument object in order to proceed with things
 	{

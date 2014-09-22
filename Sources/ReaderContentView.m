@@ -321,24 +321,6 @@ static inline CGFloat zoomScaleThatFits(CGSize target, CGSize source)
 
 #pragma mark - UIScrollViewDelegate methods
 
-- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view
-{
-    if( [self.message respondsToSelector:@selector(contentViewWillBeginDragging:)] )
-        [self.message contentViewWillBeginZooming:self];
-}
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
-{
-    if( [self.message respondsToSelector:@selector(contentViewWillBeginDragging:)] )
-        [self.message contentViewWillBeginDragging:self];
-}
-
-- (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(float)scale
-{
-    if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
-        [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
-}
-
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
     if( !decelerate )
@@ -401,13 +383,6 @@ static inline CGFloat zoomScaleThatFits(CGSize target, CGSize source)
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	[super touchesMoved:touches withEvent:event]; // Message superclass
-}
-
-#pragma mark - Velosys Features
-
-- (void)becomeVisibleInView:(UIView *)view
-{
-    [theContentView becomeVisibleInView:view];
 }
 
 @end

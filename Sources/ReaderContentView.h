@@ -55,10 +55,6 @@
 - (void)zoomDecrement:(UITapGestureRecognizer *)recognizer;
 - (void)zoomResetAnimated:(BOOL)animated;
 
-#pragma mark - Velosys Features
-
-- (void)becomeVisibleInView:(UIView *)view;
-
 @end
 
 #pragma mark -

@@ -65,8 +65,6 @@
 
 	NSString *_fileName;
     
-    NSString *_filePath;
-
 	NSString *_password;
 
 	NSURL *_fileURL;
@@ -236,10 +234,6 @@
             _searchPathDomain = searchPathDomain;
             
 			_fileName = [_filePath lastPathComponent]; // File name
-
-            if( ![[NSFileManager defaultManager] fileExistsAtPath:fullFilePath] )
-                NSLog(@"File DNE");
-            
             
 			CFURLRef docURLRef = (__bridge CFURLRef)[self fileURL]; // CFURLRef from NSURL
 
