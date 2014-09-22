@@ -336,6 +336,9 @@ static inline CGFloat zoomScaleThatFits(CGSize target, CGSize source)
 	{
 		if (self.zoomScale < realMaximumZoom) zoomBounced = NO;
 	}
+    
+    if( [self.message respondsToSelector:@selector(contentView:scrolledToOffset:zoomScale:)] )
+        [self.message contentView:self scrolledToOffset:scrollView.contentOffset zoomScale:scrollView.zoomScale];
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView

@@ -65,6 +65,9 @@
 	NSDate *lastHideTime;
 
 	BOOL ignoreDidScroll;
+    
+@private
+    BOOL _hidePageBar;
 }
 
 #pragma mark - Constants
@@ -211,6 +214,9 @@
 
 	if (page != currentPage) // Only if on different page
 	{
+        if( [self.delegate respondsToSelector:@selector(readerViewControllerPageChangedTo:)] )
+            [self.delegate readerViewControllerPageChangedTo:page];
+
 		currentPage = page; document.pageNumber = [NSNumber numberWithInteger:page];
 
 		[contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
@@ -230,7 +236,10 @@
 {
 	if (page != currentPage) // Only if on different page
 	{
-		if ((page < minimumPage) || (page > maximumPage)) return;
+        if( [self.delegate respondsToSelector:@selector(readerViewControllerPageChangedTo:)] )
+            [self.delegate readerViewControllerPageChangedTo:page];
+
+        if ((page < minimumPage) || (page > maximumPage)) return;
 
 		currentPage = page; document.pageNumber = [NSNumber numberWithInteger:page];
 
@@ -368,11 +377,14 @@
 //	mainToolbar.delegate = self; // ReaderMainToolbarDelegate
 //	[self.view addSubview:mainToolbar];
 
-	CGRect pagebarRect = self.view.bounds; pagebarRect.size.height = PAGEBAR_HEIGHT;
-	pagebarRect.origin.y = (self.view.bounds.size.height - pagebarRect.size.height);
-	mainPagebar = [[ReaderMainPagebar alloc] initWithFrame:pagebarRect document:document]; // ReaderMainPagebar
-	mainPagebar.delegate = self; // ReaderMainPagebarDelegate
-	[self.view addSubview:mainPagebar];
+    if( !_hidePageBar )
+    {
+        CGRect pagebarRect = self.view.bounds; pagebarRect.size.height = PAGEBAR_HEIGHT;
+        pagebarRect.origin.y = (self.view.bounds.size.height - pagebarRect.size.height);
+        mainPagebar = [[ReaderMainPagebar alloc] initWithFrame:pagebarRect document:document]; // ReaderMainPagebar
+        mainPagebar.delegate = self; // ReaderMainPagebarDelegate
+        [self.view addSubview:mainPagebar];
+    }
 
 	if (fakeStatusBar != nil) [self.view addSubview:fakeStatusBar]; // Add status bar background view
 
@@ -408,16 +420,16 @@
 
 		lastAppearSize = CGSizeZero; // Reset view size tracking
 	}
+    
+    if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == true)
+    {
+        [self performSelector:@selector(showDocument) withObject:nil afterDelay:0.0];
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
-
-	if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == true)
-	{
-		[self performSelector:@selector(showDocument) withObject:nil afterDelay:0.0];
-	}
 
 #if (READER_DISABLE_IDLE == TRUE) // Option
 
@@ -717,6 +729,12 @@
 	}
 }
 
+- (void)contentView:(ReaderContentView *)contentView scrolledToOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale
+{
+    if( [self.delegate respondsToSelector:@selector(readerViewControllerContentOffsetChanged:zoomScale:)] )
+        [self.delegate readerViewControllerContentOffsetChanged:offset zoomScale:zoomScale];
+}
+
 #pragma mark - ReaderMainToolbarDelegate methods
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar doneButton:(UIButton *)button
@@ -939,6 +957,36 @@
 - (void)printButtonSelected:(id)sender
 {
     [self tappedInToolbar:nil printButton:sender];
+}
+
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated
+{
+    NSInteger page = [document.pageNumber integerValue]; // Current page #
+    NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
+    ReaderContentView *targetView = [contentViews objectForKey:key];
+    
+    [targetView setZoomScale:zoomScale animated:animated];
+    [targetView setContentOffset:contentOffset animated:animated];
+}
+
+- (void)hidePageBar
+{
+    _hidePageBar = YES;
+    [mainPagebar hidePagebar];
+}
+
+- (void)setToolbarsEnabled:(BOOL)toolbarsEnabled
+{
+    if (toolbarsEnabled)
+    {
+        if (![mainPagebar superview])
+            [self.view addSubview:mainPagebar];
+    }
+    else
+    {
+        if ([mainPagebar superview])
+            [mainPagebar removeFromSuperview];
+    }
 }
 
 @end

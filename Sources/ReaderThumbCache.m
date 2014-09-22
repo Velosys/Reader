@@ -53,7 +53,7 @@
 
 + (NSString *)thumbCachePathForDocument:(ReaderDocument *)document
 {
-    NSString *cachesPath = document.cachePath;
+    NSString *cachesPath = [document fullCachePath];
 
 	return [cachesPath stringByAppendingPathComponent:document.guid]; // Append GUID
 }

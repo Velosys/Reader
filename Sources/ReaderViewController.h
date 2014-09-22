@@ -34,6 +34,8 @@
 @optional // Delegate protocols
 
 - (void)dismissReaderViewController:(ReaderViewController *)viewController;
+- (void)readerViewControllerPageChangedTo:(NSInteger)newPage;
+- (void)readerViewControllerContentOffsetChanged:(CGPoint)newContentOffset zoomScale:(CGFloat)zoomScale;
 
 @end
 
@@ -42,5 +44,13 @@
 @property (nonatomic, weak, readwrite) id <ReaderViewControllerDelegate> delegate;
 
 - (instancetype)initWithReaderDocument:(ReaderDocument *)object;
+
+- (void)showDocumentPage:(NSInteger)page;
+
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated;
+
+- (void)hidePageBar;
+
+- (void)setToolbarsEnabled:(BOOL)toolbarsEnabled;
 
 @end

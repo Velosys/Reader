@@ -37,6 +37,7 @@
 @required // Delegate protocols
 
 - (void)contentView:(ReaderContentView *)contentView touchesBegan:(NSSet *)touches;
+- (void)contentView:(ReaderContentView *)contentView scrolledToOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale;
 
 @end
 

@@ -59,6 +59,10 @@
     
     NSString *_cachePath;
     
+    NSSearchPathDirectory _searchPathDirectory;
+    
+    NSSearchPathDomainMask _searchPathDomain;
+
 	NSString *_fileName;
 
 	NSString *_password;
@@ -79,6 +83,8 @@
 @synthesize filePath = _filePath;
 @synthesize archivePath = _archivePath;
 @synthesize cachePath = _cachePath;
+@synthesize searchPathDirectory = _searchPathDirectory;
+@synthesize searchPathDomain = _searchPathDomain;
 @dynamic fileName, fileURL;
 @dynamic canEmail, canExport, canPrint;
 
@@ -138,15 +144,30 @@
 	return document;
 }
 
-+ (ReaderDocument *)withDocumentFilePath:(NSString *)filePath archivePath:(NSString *)archivePath cachePath:(NSString *)cachePath password:(NSString *)phrase
++ (ReaderDocument *)withDocumentFilePath:(NSString *)filePath
+                             archivePath:(NSString *)archivePath
+                               cachePath:(NSString *)cachePath
+                    relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
+                        searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
+                                password:(NSString *)phrase
 {
 	ReaderDocument *document = nil; // ReaderDocument object
 
-    document = [ReaderDocument unarchiveFromPath:archivePath password:phrase];
+    
+    NSURL *directoryURL = [[[NSFileManager defaultManager] URLsForDirectory:searchPathDirectory inDomains:searchPathDomain] lastObject];
+    NSString *directoryPath = [directoryURL path];
+    NSString *fullArchivePath = [directoryPath stringByAppendingPathComponent:archivePath];
+
+    document = [ReaderDocument unarchiveFromPath:fullArchivePath password:phrase];
 
 	if (document == nil) // Unarchive failed so we create a new ReaderDocument object
 	{
-		document = [[ReaderDocument alloc] initWithFilePath:filePath archivePath:archivePath cachePath:cachePath password:phrase];
+		document = [[ReaderDocument alloc] initWithFilePath:filePath
+                                                archivePath:archivePath
+                                                  cachePath:cachePath
+                                       relativeToSearchPath:searchPathDirectory
+                                           searchPathDomain:searchPathDomain
+                                                   password:phrase];
 	}
 
 	return document;
@@ -179,11 +200,20 @@
 
 #pragma mark - ReaderDocument instance methods
 
-- (instancetype)initWithFilePath:(NSString *)fullFilePath archivePath:(NSString *)archivePath cachePath:cachePath password:(NSString *)phrase
+- (instancetype)initWithFilePath:(NSString *)filePath
+                     archivePath:(NSString *)archivePath
+                       cachePath:cachePath
+            relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
+                searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
+                        password:(NSString *)phrase
 {
 	if ((self = [super init])) // Initialize superclass first
 	{
-		if ([ReaderDocument isPDF:fullFilePath] == YES) // Valid PDF
+        NSURL *directoryURL = [[[NSFileManager defaultManager] URLsForDirectory:searchPathDirectory inDomains:searchPathDomain] lastObject];
+        NSString *directoryPath = [directoryURL path];
+        NSString *fullPath = [directoryPath stringByAppendingPathComponent:filePath];
+        
+		if ([ReaderDocument isPDF:fullPath] == YES) // Valid PDF
 		{
 			_guid = [ReaderDocument GUID]; // Create the document's GUID
 
@@ -193,11 +223,15 @@
 
 			_pageNumber = [NSNumber numberWithInteger:1]; // Start on page one
 
-            _filePath = fullFilePath;
+            _filePath = filePath;
             
             _archivePath = archivePath;
             
             _cachePath = cachePath;
+            
+            _searchPathDirectory = searchPathDirectory;
+            
+            _searchPathDomain = searchPathDomain;
             
 			_fileName = [_filePath lastPathComponent]; // File name
 
@@ -222,7 +256,7 @@
 
 			NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
-			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:fullFilePath error:NULL];
+			NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:fullPath error:NULL];
 
 			_fileDate = [fileAttributes objectForKey:NSFileModificationDate]; // File date
 
@@ -248,7 +282,8 @@
 {
 	if (_fileURL == nil) // Create and keep the file URL the first time it is requested
 	{
-		_fileURL = [[NSURL alloc] initFileURLWithPath:_filePath isDirectory:NO]; // File URL from full file path
+        NSString *fullPath = [self fullFilePath];
+		_fileURL = [[NSURL alloc] initFileURLWithPath:fullPath isDirectory:NO]; // File URL from full file path
 	}
 
 	return _fileURL;
@@ -271,7 +306,7 @@
 
 - (BOOL)archiveDocumentProperties
 {
-	return [NSKeyedArchiver archiveRootObject:self toFile:_archivePath];
+	return [NSKeyedArchiver archiveRootObject:self toFile:[self fullArchivePath]];
 }
 
 - (void)updateDocumentProperties
@@ -325,6 +360,10 @@
 	[encoder encodeObject:_fileSize forKey:@"FileSize"];
 
 	[encoder encodeObject:_lastOpen forKey:@"LastOpen"];
+    
+    [encoder encodeObject:@(_searchPathDirectory) forKey:@"SearchPathDirectory"];
+    
+    [encoder encodeObject:@(_searchPathDomain) forKey:@"SearchPathDomain"];
 }
 
 - (instancetype)initWithCoder:(NSCoder *)decoder
@@ -353,6 +392,12 @@
 
 		_lastOpen = [decoder decodeObjectForKey:@"LastOpen"];
 
+        NSNumber *searchPathDirectory = [decoder decodeObjectForKey:@"SearchPathDirectory"];
+        _searchPathDirectory = [searchPathDirectory unsignedIntegerValue];
+        
+        NSNumber *searchPathDomain = [decoder decodeObjectForKey:@"SearchPathDomain"];
+        _searchPathDomain = [searchPathDomain unsignedIntegerValue];
+        
 		if (_guid == nil) _guid = [ReaderDocument GUID];
 
 		if (_bookmarks != nil)
@@ -362,6 +407,30 @@
 	}
 
 	return self;
+}
+
+- (NSString *)fullFilePath
+{
+    NSURL *directoryURL = [[[NSFileManager defaultManager] URLsForDirectory:_searchPathDirectory inDomains:_searchPathDomain] lastObject];
+    NSString *directoryPath = [directoryURL path];
+
+    return [directoryPath stringByAppendingPathComponent:_filePath];
+}
+
+- (NSString *)fullArchivePath
+{
+    NSURL *directoryURL = [[[NSFileManager defaultManager] URLsForDirectory:_searchPathDirectory inDomains:_searchPathDomain] lastObject];
+    NSString *directoryPath = [directoryURL path];
+    
+    return [directoryPath stringByAppendingPathComponent:_archivePath];
+}
+
+- (NSString *)fullCachePath
+{
+    NSURL *directoryURL = [[[NSFileManager defaultManager] URLsForDirectory:_searchPathDirectory inDomains:_searchPathDomain] lastObject];
+    NSString *directoryPath = [directoryURL path];
+    
+    return [directoryPath stringByAppendingPathComponent:_cachePath];
 }
 
 @end

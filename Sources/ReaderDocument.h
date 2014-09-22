@@ -40,6 +40,8 @@
 @property (nonatomic, strong, readonly) NSString *fileName;
 @property (nonatomic, strong, readonly) NSString *password;
 @property (nonatomic, strong, readonly) NSURL *fileURL;
+@property (nonatomic, readonly) NSSearchPathDirectory searchPathDirectory;
+@property (nonatomic, readonly) NSSearchPathDomainMask searchPathDomain;
 
 @property (nonatomic, readonly) BOOL canEmail;
 @property (nonatomic, readonly) BOOL canExport;
@@ -47,14 +49,31 @@
 
 + (NSString *)documentsPath;
 
-+ (ReaderDocument *)withDocumentFilePath:(NSString *)filename archivePath:(NSString *)archivePath cachePath:(NSString *)cachePath password:(NSString *)phrase;
++ (ReaderDocument *)withDocumentFilePath:(NSString *)filePath
+                             archivePath:(NSString *)archivePath
+                               cachePath:(NSString *)cachePath
+                    relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
+                        searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
+                                password:(NSString *)phrase;
 
-+ (ReaderDocument *)unarchiveFromPath:(NSString *)archivePath password:(NSString *)phrase;
++ (ReaderDocument *)unarchiveFromPath:(NSString *)archivePath
+                             password:(NSString *)phrase;
 
-- (instancetype)initWithFilePath:(NSString *)fullFilePath archivePath:(NSString *)archivePath cachePath:(NSString *)cachePath password:(NSString *)phrase;
+- (instancetype)initWithFilePath:(NSString *)fullFilePath
+                     archivePath:(NSString *)archivePath
+                       cachePath:cachePath
+            relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
+                searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
+                        password:(NSString *)phrase;
 
 - (BOOL)archiveDocumentProperties;
 
 - (void)updateDocumentProperties;
+
+- (NSString *)fullFilePath;
+
+- (NSString *)fullArchivePath;
+
+- (NSString *)fullCachePath;
 
 @end
