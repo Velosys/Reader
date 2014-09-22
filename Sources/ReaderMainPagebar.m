@@ -118,8 +118,6 @@
 
 		CGSize size = CGSizeMake(THUMB_LARGE_WIDTH, THUMB_LARGE_HEIGHT); // Maximum thumb size
 
-		NSURL *fileURL = document.fileURL; NSString *guid = document.guid; NSString *phrase = document.password;
-
 		ReaderThumbRequest *request = [ReaderThumbRequest newForView:pageThumbView document:document page:page size:size];
 
 		UIImage *image = [[ReaderThumbCache sharedInstance] thumbRequest:request priority:YES]; // Request the thumb
@@ -308,8 +306,6 @@
 		if (smallThumbView == nil) // We need to create a new small thumb view for the page number
 		{
 			CGSize size = CGSizeMake(THUMB_SMALL_WIDTH, THUMB_SMALL_HEIGHT); // Maximum thumb size
-
-			NSURL *fileURL = document.fileURL; NSString *guid = document.guid; NSString *phrase = document.password;
 
 			smallThumbView = [[ReaderPagebarThumb alloc] initWithFrame:thumbRect small:YES]; // Create a small thumb view
 

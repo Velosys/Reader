@@ -34,8 +34,6 @@
 
 @required // Delegate protocols
 - (void)dismissReaderViewController:(ReaderViewController *)viewController;
-- (void)readerViewControllerPageChangedTo:(NSInteger)newPage;
-- (void)readerViewControllerContentOffsetChanged:(CGPoint)newContentOffset zoomScale:(CGFloat)zoomScale;
 
 @optional
 - (void)readerViewControllerPageChangedTo:(NSInteger)newPage;
@@ -59,14 +57,6 @@ typedef enum {
 - (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated;
 
 - (void)hidePageBar;
-
-- (void)setToolbarsEnabled:(BOOL)toolbarsEnabled;
-
-- (void)showDocumentPage:(NSInteger)page;
-
-- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated;
-
-- (void)setToolbarsVisible:(BOOL)toolbarsVisible;
 
 - (void)setToolbarsEnabled:(BOOL)toolbarsEnabled;
 

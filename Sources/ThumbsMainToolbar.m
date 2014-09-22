@@ -80,7 +80,7 @@
 
 		UIFont *doneButtonFont = [UIFont systemFontOfSize:BUTTON_FONT_SIZE];
 		NSString *doneButtonText = NSLocalizedString(@"Done", @"button");
-		CGSize doneButtonSize = [doneButtonText sizeWithFont:doneButtonFont];
+        CGSize doneButtonSize = [doneButtonText sizeWithAttributes:@{NSFontAttributeName:doneButtonFont}];
 		CGFloat doneButtonWidth = (doneButtonSize.width + TEXT_BUTTON_PADDING);
 
 		UIButton *doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -92,7 +92,6 @@
 		[doneButton setBackgroundImage:buttonH forState:UIControlStateHighlighted];
 		[doneButton setBackgroundImage:buttonN forState:UIControlStateNormal];
 		doneButton.autoresizingMask = UIViewAutoresizingNone;
-		//doneButton.backgroundColor = [UIColor grayColor];
 		doneButton.exclusiveTouch = YES;
 
 		[self addSubview:doneButton]; //leftButtonX += (doneButtonWidth + buttonSpacing);
@@ -113,9 +112,7 @@
 		showControl.frame = CGRectMake(showControlX, BUTTON_Y, SHOW_CONTROL_WIDTH, BUTTON_HEIGHT);
 		showControl.tintColor = (useTint ? [UIColor blackColor] : [UIColor colorWithWhite:0.8f alpha:1.0f]);
 		showControl.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-		showControl.segmentedControlStyle = UISegmentedControlStyleBar;
 		showControl.selectedSegmentIndex = 0; // Default segment index
-		//showControl.backgroundColor = [UIColor grayColor];
 		showControl.exclusiveTouch = YES;
 
 		[showControl addTarget:self action:@selector(showControlTapped:) forControlEvents:UIControlEventValueChanged];
