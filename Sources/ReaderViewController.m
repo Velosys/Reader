@@ -71,6 +71,7 @@
     
 @private
     BOOL _hidePageBar;
+    BOOL _isDocumentDisplayed;
 }
 
 #pragma mark - Constants
@@ -273,6 +274,8 @@
 	[self showDocumentPage:[document.pageNumber integerValue]]; // Show page
 
 	document.lastOpen = [NSDate date]; // Update document last opened date
+    
+    _isDocumentDisplayed = YES;
 }
 
 - (void)closeDocument
@@ -293,6 +296,8 @@
 	{
 		NSAssert(NO, @"Delegate must respond to -dismissReaderViewController:");
 	}
+    
+    _isDocumentDisplayed = NO;
 }
 
 #pragma mark - UIViewController methods
@@ -412,21 +417,17 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-	[super viewWillAppear:animated];
-
-	if (CGSizeEqualToSize(lastAppearSize, CGSizeZero) == false)
-	{
-		if (CGSizeEqualToSize(lastAppearSize, self.view.bounds.size) == false)
-		{
-			[self updateContentViews:theScrollView]; // Update content views
-		}
-
-		lastAppearSize = CGSizeZero; // Reset view size tracking
-	}
+    [super viewWillAppear:animated];
     
-    if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == true)
+    if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == true || !_isDocumentDisplayed )
+        [self showDocument];
+    
+    if (CGSizeEqualToSize(lastAppearSize, CGSizeZero) == false)
     {
-        [self performSelector:@selector(showDocument) withObject:nil afterDelay:0.0];
+        if (CGSizeEqualToSize(lastAppearSize, self.view.bounds.size) == false)
+            [self updateContentViews:theScrollView]; // Update content views
+        
+        lastAppearSize = CGSizeZero; // Reset view size tracking
     }
 }
 
