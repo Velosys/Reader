@@ -1,9 +1,9 @@
 //
 //	ReaderDocument.h
-//	Reader v2.6.0
+//	Reader v2.8.1
 //
 //	Created by Julius Oklamcak on 2011-07-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -34,19 +34,46 @@
 @property (nonatomic, strong, readonly) NSNumber *pageCount;
 @property (nonatomic, strong, readwrite) NSNumber *pageNumber;
 @property (nonatomic, strong, readonly) NSMutableIndexSet *bookmarks;
+@property (nonatomic, strong, readonly) NSString *filePath;
+@property (nonatomic, strong, readonly) NSString *archivePath;
+@property (nonatomic, strong, readonly) NSString *cachePath;
 @property (nonatomic, strong, readonly) NSString *fileName;
 @property (nonatomic, strong, readonly) NSString *password;
 @property (nonatomic, strong, readonly) NSURL *fileURL;
-@property (nonatomic, strong, readonly) NSString *filePath;
+@property (nonatomic, readonly) NSSearchPathDirectory searchPathDirectory;
+@property (nonatomic, readonly) NSSearchPathDomainMask searchPathDomain;
 
-+ (ReaderDocument *)withDocumentFilePath:(NSString *)filename password:(NSString *)phrase;
+@property (nonatomic, readonly) BOOL canEmail;
+@property (nonatomic, readonly) BOOL canExport;
+@property (nonatomic, readonly) BOOL canPrint;
 
-+ (ReaderDocument *)unarchiveFromFileName:(NSString *)filename password:(NSString *)phrase;
++ (NSString *)documentsPath;
 
-- (id)initWithFilePath:(NSString *)fullFilePath password:(NSString *)phrase;
++ (ReaderDocument *)withDocumentFilePath:(NSString *)filePath
+                             archivePath:(NSString *)archivePath
+                               cachePath:(NSString *)cachePath
+                    relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
+                        searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
+                                password:(NSString *)phrase;
 
-- (void)saveReaderDocument;
++ (ReaderDocument *)unarchiveFromPath:(NSString *)archivePath
+                             password:(NSString *)phrase;
 
-- (void)updateProperties;
+- (instancetype)initWithFilePath:(NSString *)fullFilePath
+                     archivePath:(NSString *)archivePath
+                       cachePath:cachePath
+            relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
+                searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
+                        password:(NSString *)phrase;
+
+- (BOOL)archiveDocumentProperties;
+
+- (void)updateDocumentProperties;
+
+- (NSString *)fullFilePath;
+
+- (NSString *)fullArchivePath;
+
+- (NSString *)fullCachePath;
 
 @end

@@ -1,9 +1,9 @@
 //
 //	ReaderViewController.m
-//	Reader v2.6.0
+//	Reader v2.8.1
 //
 //	Created by Julius Oklamcak on 2011-07-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@
 
 #import <MessageUI/MessageUI.h>
 
-@interface ReaderViewController () <UIScrollViewDelegate, UIGestureRecognizerDelegate, MFMailComposeViewControllerDelegate,
+@interface ReaderViewController () <UIScrollViewDelegate, UIGestureRecognizerDelegate, MFMailComposeViewControllerDelegate, UIDocumentInteractionControllerDelegate,
 									ReaderMainToolbarDelegate, ReaderMainPagebarDelegate, ReaderContentViewDelegate, ThumbsViewControllerDelegate>
 
 @property (nonatomic, strong) UIButton *closeButton;
@@ -53,266 +53,290 @@
 
 	NSMutableDictionary *contentViews;
 
+	UIUserInterfaceIdiom userInterfaceIdiom;
+
+	NSInteger currentPage, minimumPage, maximumPage;
+
+	UIDocumentInteractionController *documentInteraction;
+
 	UIPrintInteractionController *printInteraction;
 
-	NSInteger currentPage;
+	CGFloat scrollViewOutset;
 
 	CGSize lastAppearSize;
 
 	NSDate *lastHideTime;
 
-	BOOL isVisible;
+	BOOL ignoreDidScroll;
+    
+@private
+    BOOL _hidePageBar;
 }
 
-#pragma mark Constants
+#pragma mark - Constants
 
-#define PAGING_VIEWS 3
+#define STATUS_HEIGHT 20.0f
 
 #define TOOLBAR_HEIGHT 44.0f
 #define PAGEBAR_HEIGHT 48.0f
 
+#define SCROLLVIEW_OUTSET_SMALL 4.0f
+#define SCROLLVIEW_OUTSET_LARGE 8.0f
+
 #define TAP_AREA_SIZE 48.0f
 
-#define CLOSE_BUTTON_PADDING ( UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation]) ? 10.0f : 4.0f )
-
-#pragma mark Properties
+#pragma mark - Properties
 
 @synthesize delegate;
 
-#pragma mark Support methods
+#pragma mark - ReaderViewController methods
 
-- (void)updateScrollViewContentSize
+- (void)updateContentSize:(UIScrollView *)scrollView
 {
-	NSInteger count = [document.pageCount integerValue];
+	CGFloat contentHeight = scrollView.bounds.size.height; // Height
 
-	if (count > PAGING_VIEWS) count = PAGING_VIEWS; // Limit
+	CGFloat contentWidth = (scrollView.bounds.size.width * maximumPage);
 
-	CGFloat contentHeight = theScrollView.bounds.size.height;
-
-	CGFloat contentWidth = (theScrollView.bounds.size.width * count);
-
-	theScrollView.contentSize = CGSizeMake(contentWidth, contentHeight);
+	scrollView.contentSize = CGSizeMake(contentWidth, contentHeight);
 }
 
-- (void)updateScrollViewContentViews
+- (void)updateContentViews:(UIScrollView *)scrollView
 {
-	[self updateScrollViewContentSize]; // Update the content size
-
-	NSMutableIndexSet *pageSet = [NSMutableIndexSet indexSet]; // Page set
+	[self updateContentSize:scrollView]; // Update content size first
 
 	[contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
-		^(id key, id object, BOOL *stop)
+		^(NSNumber *key, ReaderContentView *contentView, BOOL *stop)
 		{
-			ReaderContentView *contentView = object; [pageSet addIndex:contentView.tag];
+			NSInteger page = [key integerValue]; // Page number value
+
+			CGRect viewRect = CGRectZero; viewRect.size = scrollView.bounds.size;
+
+			viewRect.origin.x = (viewRect.size.width * (page - 1)); // Update X
+
+			contentView.frame = CGRectInset(viewRect, scrollViewOutset, 0.0f);
 		}
 	];
 
-	__block CGRect viewRect = CGRectZero; viewRect.size = theScrollView.bounds.size;
+	NSInteger page = currentPage; // Update scroll view offset to current page
 
-	__block CGPoint contentOffset = CGPointZero; NSInteger page = [document.pageNumber integerValue];
-
-	[pageSet enumerateIndexesUsingBlock: // Enumerate page number set
-		^(NSUInteger number, BOOL *stop)
-		{
-			NSNumber *key = [NSNumber numberWithInteger:number]; // # key
-
-			ReaderContentView *contentView = [contentViews objectForKey:key];
-
-			contentView.frame = viewRect; if (page == number) contentOffset = viewRect.origin;
-
-			viewRect.origin.x += viewRect.size.width; // Next view frame position
-		}
-	];
-
-	if (CGPointEqualToPoint(theScrollView.contentOffset, contentOffset) == false)
+	CGPoint contentOffset = CGPointMake((scrollView.bounds.size.width * (page - 1)), 0.0f);
+	if (CGPointEqualToPoint(scrollView.contentOffset, contentOffset) == false) // Update
 	{
-		theScrollView.contentOffset = contentOffset; // Update content offset
+		scrollView.contentOffset = contentOffset; // Update content offset
 	}
-    
-    [self performSelector:@selector(initialCloseButtonPlacement) withObject:nil afterDelay:0.0];
+
+	[mainToolbar setBookmarkState:[document.bookmarks containsIndex:page]];
+
+	[mainPagebar updatePagebar]; // Update page bar
 }
 
-- (void)updateToolbarBookmarkIcon
+- (void)addContentView:(UIScrollView *)scrollView page:(NSInteger)page
 {
-	NSInteger page = [document.pageNumber integerValue];
+	CGRect viewRect = CGRectZero; viewRect.size = scrollView.bounds.size;
 
-	BOOL bookmarked = [document.bookmarks containsIndex:page];
+	viewRect.origin.x = (viewRect.size.width * (page - 1)); viewRect = CGRectInset(viewRect, scrollViewOutset, 0.0f);
 
-	[mainToolbar setBookmarkState:bookmarked]; // Update
+	NSURL *fileURL = document.fileURL; NSString *phrase = document.password; // Document properties
+
+	ReaderContentView *contentView = [[ReaderContentView alloc] initWithFrame:viewRect fileURL:fileURL page:page password:phrase]; // ReaderContentView
+
+	contentView.message = self; [contentViews setObject:contentView forKey:[NSNumber numberWithInteger:page]]; [scrollView addSubview:contentView];
+
+	[contentView showPageThumb:document page:page]; // Request page preview thumb
+}
+
+- (void)layoutContentViews:(UIScrollView *)scrollView
+{
+	CGFloat viewWidth = scrollView.bounds.size.width; // View width
+
+	CGFloat contentOffsetX = scrollView.contentOffset.x; // Content offset X
+
+	NSInteger pageB = ((contentOffsetX + viewWidth - 1.0f) / viewWidth); // Pages
+
+	NSInteger pageA = (contentOffsetX / viewWidth); pageB += 2; // Add extra pages
+
+	if (pageA < minimumPage) pageA = minimumPage; if (pageB > maximumPage) pageB = maximumPage;
+
+	NSRange pageRange = NSMakeRange(pageA, (pageB - pageA + 1)); // Make page range (A to B)
+
+	NSMutableIndexSet *pageSet = [NSMutableIndexSet indexSetWithIndexesInRange:pageRange];
+
+	for (NSNumber *key in [contentViews allKeys]) // Enumerate content views
+	{
+		NSInteger page = [key integerValue]; // Page number value
+
+		if ([pageSet containsIndex:page] == NO) // Remove content view
+		{
+			ReaderContentView *contentView = [contentViews objectForKey:key];
+
+			[contentView removeFromSuperview]; [contentViews removeObjectForKey:key];
+		}
+		else // Visible content view - so remove it from page set
+		{
+			[pageSet removeIndex:page];
+		}
+	}
+
+	NSInteger pages = pageSet.count;
+
+	if (pages > 0) // We have pages to add
+	{
+		NSEnumerationOptions options = 0; // Default
+
+		if (pages == 2) // Handle case of only two content views
+		{
+			if ((maximumPage > 2) && ([pageSet lastIndex] == maximumPage)) options = NSEnumerationReverse;
+		}
+		else if (pages == 3) // Handle three content views - show the middle one first
+		{
+			NSMutableIndexSet *workSet = [pageSet mutableCopy]; options = NSEnumerationReverse;
+
+			[workSet removeIndex:[pageSet firstIndex]]; [workSet removeIndex:[pageSet lastIndex]];
+
+			NSInteger page = [workSet firstIndex]; [pageSet removeIndex:page];
+
+			[self addContentView:scrollView page:page];
+		}
+
+		[pageSet enumerateIndexesWithOptions:options usingBlock: // Enumerate page set
+			^(NSUInteger page, BOOL *stop)
+			{
+				[self addContentView:scrollView page:page];
+			}
+		];
+	}
+}
+
+- (void)handleScrollViewDidEnd:(UIScrollView *)scrollView
+{
+	CGFloat viewWidth = scrollView.bounds.size.width; // Scroll view width
+
+	CGFloat contentOffsetX = scrollView.contentOffset.x; // Content offset X
+
+	NSInteger page = (contentOffsetX / viewWidth); page++; // Page number
+
+	if (page != currentPage) // Only if on different page
+	{
+        if( [self.delegate respondsToSelector:@selector(readerViewControllerPageChangedTo:)] )
+            [self.delegate readerViewControllerPageChangedTo:page];
+
+		currentPage = page; document.pageNumber = [NSNumber numberWithInteger:page];
+
+		[contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
+			^(NSNumber *key, ReaderContentView *contentView, BOOL *stop)
+			{
+				if ([key integerValue] != page) [contentView zoomResetAnimated:NO];
+			}
+		];
+
+		[mainToolbar setBookmarkState:[document.bookmarks containsIndex:page]];
+
+		[mainPagebar updatePagebar]; // Update page bar
+	}
 }
 
 - (void)showDocumentPage:(NSInteger)page
 {
-	if (page != currentPage) // Only if different
+	if (page != currentPage) // Only if on different page
 	{
         if( [self.delegate respondsToSelector:@selector(readerViewControllerPageChangedTo:)] )
             [self.delegate readerViewControllerPageChangedTo:page];
-        
-		NSInteger minValue; NSInteger maxValue;
-		NSInteger maxPage = [document.pageCount integerValue];
-		NSInteger minPage = 1;
 
-		if ((page < minPage) || (page > maxPage)) return;
+        if ((page < minimumPage) || (page > maximumPage)) return;
 
-		if (maxPage <= PAGING_VIEWS) // Few pages
-		{
-			minValue = minPage;
-			maxValue = maxPage;
-		}
-		else // Handle more pages
-		{
-			minValue = (page - 1);
-			maxValue = (page + 1);
+		currentPage = page; document.pageNumber = [NSNumber numberWithInteger:page];
 
-			if (minValue < minPage)
-				{minValue++; maxValue++;}
-			else
-				if (maxValue > maxPage)
-					{minValue--; maxValue--;}
-		}
+		CGPoint contentOffset = CGPointMake((theScrollView.bounds.size.width * (page - 1)), 0.0f);
 
-		NSMutableIndexSet *newPageSet = [NSMutableIndexSet new];
-
-		NSMutableDictionary *unusedViews = [contentViews mutableCopy];
-
-		CGRect viewRect = CGRectZero; viewRect.size = theScrollView.bounds.size;
-
-		for (NSInteger number = minValue; number <= maxValue; number++)
-		{
-			NSNumber *key = [NSNumber numberWithInteger:number]; // # key
-
-			ReaderContentView *contentView = [contentViews objectForKey:key];
-
-			if (contentView == nil) // Create a brand new document content view
-			{
-				NSURL *fileURL = document.fileURL; NSString *phrase = document.password; // Document properties
-
-				contentView = [[ReaderContentView alloc] initWithFrame:viewRect fileURL:fileURL page:number password:phrase];
-
-				[theScrollView addSubview:contentView]; [contentViews setObject:contentView forKey:key];
-
-				contentView.message = self; [newPageSet addIndex:number];
-			}
-			else // Reposition the existing content view
-			{
-				contentView.frame = viewRect; [contentView zoomReset];
-
-				[unusedViews removeObjectForKey:key];
-			}
-			viewRect.origin.x += viewRect.size.width;
-		}
-
-		[unusedViews enumerateKeysAndObjectsUsingBlock: // Remove unused views
-			^(id key, id object, BOOL *stop)
-			{
-				[contentViews removeObjectForKey:key];
-
-				ReaderContentView *contentView = object;
-
-				[contentView removeFromSuperview];
-			}
-		];
-
-		unusedViews = nil; // Release unused views
-
-		CGFloat viewWidthX1 = viewRect.size.width;
-		CGFloat viewWidthX2 = (viewWidthX1 * 2.0f);
-
-		CGPoint contentOffset = CGPointZero;
-
-		if (maxPage >= PAGING_VIEWS)
-		{
-			if (page == maxPage)
-				contentOffset.x = viewWidthX2;
-			else
-				if (page != minPage)
-					contentOffset.x = viewWidthX1;
-		}
+		if (CGPointEqualToPoint(theScrollView.contentOffset, contentOffset) == true)
+			[self layoutContentViews:theScrollView];
 		else
-			if (page == (PAGING_VIEWS - 1))
-				contentOffset.x = viewWidthX1;
+			[theScrollView setContentOffset:contentOffset];
 
-		if (CGPointEqualToPoint(theScrollView.contentOffset, contentOffset) == false)
-		{
-			theScrollView.contentOffset = contentOffset; // Update content offset
-		}
-
-		if ([document.pageNumber integerValue] != page) // Only if different
-		{
-			document.pageNumber = [NSNumber numberWithInteger:page]; // Update page number
-		}
-
-		NSURL *fileURL = document.fileURL; NSString *phrase = document.password; NSString *guid = document.guid;
-
-		if ([newPageSet containsIndex:page] == YES) // Preview visible page first
-		{
-			NSNumber *key = [NSNumber numberWithInteger:page]; // # key
-
-			ReaderContentView *targetView = [contentViews objectForKey:key];
-
-			[targetView showPageThumb:fileURL page:page password:phrase guid:guid];
-
-			[newPageSet removeIndex:page]; // Remove visible page from set
-		}
-
-		[newPageSet enumerateIndexesWithOptions:NSEnumerationReverse usingBlock: // Show previews
-			^(NSUInteger number, BOOL *stop)
+		[contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
+			^(NSNumber *key, ReaderContentView *contentView, BOOL *stop)
 			{
-				NSNumber *key = [NSNumber numberWithInteger:number]; // # key
-
-				ReaderContentView *targetView = [contentViews objectForKey:key];
-
-				[targetView showPageThumb:fileURL page:number password:phrase guid:guid];
+				if ([key integerValue] != page) [contentView zoomResetAnimated:NO];
 			}
 		];
 
-		newPageSet = nil; // Release new page set
+		[mainToolbar setBookmarkState:[document.bookmarks containsIndex:page]];
 
-		[mainPagebar updatePagebar]; // Update the pagebar display
-
-		[self updateToolbarBookmarkIcon]; // Update bookmark
-
-		currentPage = page; // Track current page number
+		[mainPagebar updatePagebar]; // Update page bar
 	}
-    [self performSelector:@selector(initialCloseButtonPlacement) withObject:nil afterDelay:0.0];
 }
 
-- (void)showDocument:(id)object
+- (void)showDocument
 {
-	[self updateScrollViewContentSize]; // Set content size
+	[self updateContentSize:theScrollView]; // Update content size first
 
-	[self showDocumentPage:[document.pageNumber integerValue]];
+	[self showDocumentPage:[document.pageNumber integerValue]]; // Show page
 
-	document.lastOpen = [NSDate date]; // Update last opened date
-
-	isVisible = YES; // iOS present modal bodge
+	document.lastOpen = [NSDate date]; // Update document last opened date
 }
 
-#pragma mark UIViewController methods
-
-- (id)initWithReaderDocument:(ReaderDocument *)object
+- (void)closeDocument
 {
-	id reader = nil; // ReaderViewController object
+	if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 
-	if ((object != nil) && ([object isKindOfClass:[ReaderDocument class]]))
+	[document archiveDocumentProperties]; // Save any ReaderDocument changes
+
+	[[ReaderThumbQueue sharedInstance] cancelOperationsWithGUID:document.guid];
+
+	[[ReaderThumbCache sharedInstance] removeAllObjects]; // Empty the thumb cache
+
+	if ([delegate respondsToSelector:@selector(dismissReaderViewController:)] == YES)
 	{
-		if ((self = [super initWithNibName:nil bundle:nil])) // Designated initializer
+		[delegate dismissReaderViewController:self]; // Dismiss the ReaderViewController
+	}
+	else // We have a "Delegate must respond to -dismissReaderViewController:" error
+	{
+		NSAssert(NO, @"Delegate must respond to -dismissReaderViewController:");
+	}
+}
+
+#pragma mark - UIViewController methods
+
+- (instancetype)initWithReaderDocument:(ReaderDocument *)object
+{
+	if ((self = [super initWithNibName:nil bundle:nil])) // Initialize superclass
+	{
+        UIBarButtonItem *doneBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(doneButtonSelected:)];
+        [self.navigationItem setLeftBarButtonItem:doneBarButtonItem];
+        
+        UIImage *printImage = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Print"];
+        UIBarButtonItem *emailBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(emailButtonSelected:)];
+        UIBarButtonItem *printBarButtonItem = [[UIBarButtonItem alloc] initWithImage:printImage style:UIBarButtonItemStylePlain target:self action:@selector(printButtonSelected:)];
+        [self.navigationItem setRightBarButtonItems:@[printBarButtonItem, emailBarButtonItem]];
+        
+		if ((object != nil) && ([object isKindOfClass:[ReaderDocument class]])) // Valid object
 		{
-			NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+			userInterfaceIdiom = [UIDevice currentDevice].userInterfaceIdiom; // User interface idiom
 
-			[notificationCenter addObserver:self selector:@selector(applicationWill:) name:UIApplicationWillTerminateNotification object:nil];
+			NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter]; // Default notification center
 
-			[notificationCenter addObserver:self selector:@selector(applicationWill:) name:UIApplicationWillResignActiveNotification object:nil];
+			[notificationCenter addObserver:self selector:@selector(applicationWillResign:) name:UIApplicationWillTerminateNotification object:nil];
 
-			[object updateProperties]; document = object; // Retain the supplied ReaderDocument object for our use
+			[notificationCenter addObserver:self selector:@selector(applicationWillResign:) name:UIApplicationWillResignActiveNotification object:nil];
 
-			[ReaderThumbCache touchThumbCacheWithGUID:object.guid]; // Touch the document thumb cache directory
+			scrollViewOutset = ((userInterfaceIdiom == UIUserInterfaceIdiomPad) ? SCROLLVIEW_OUTSET_LARGE : SCROLLVIEW_OUTSET_SMALL);
 
-			reader = self; // Return an initialized ReaderViewController object
+			[object updateDocumentProperties]; document = object; // Retain the supplied ReaderDocument object for our use
+
+			[ReaderThumbCache touchThumbCacheForDocument:document]; // Touch the document thumb cache directory
+		}
+		else // Invalid ReaderDocument object
+		{
+			self = nil;
 		}
 	}
 
-	return reader;
+	return self;
+}
+
+- (void)dealloc
+{
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)viewDidLoad
@@ -321,44 +345,51 @@
     
 	assert(document != nil); // Must have a valid ReaderDocument
 
-	self.view.backgroundColor = self.pdfBackgroundColor ? : [UIColor clearColor];
+	self.view.backgroundColor = [UIColor grayColor]; // Neutral gray
 
-	CGRect viewRect = self.view.bounds; // View controller's view bounds
+	UIView *fakeStatusBar = nil; CGRect viewRect = self.view.bounds; // View bounds
 
-	theScrollView = [[UIScrollView alloc] initWithFrame:viewRect]; // All
+	if ([self respondsToSelector:@selector(edgesForExtendedLayout)]) // iOS 7+
+	{
+        self.automaticallyAdjustsScrollViewInsets = NO;
+        
+		if ([self prefersStatusBarHidden] == NO) // Visible status bar
+		{
+			CGRect statusBarRect = viewRect; statusBarRect.size.height = STATUS_HEIGHT;
+			fakeStatusBar = [[UIView alloc] initWithFrame:statusBarRect]; // UIView
+			fakeStatusBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+			fakeStatusBar.backgroundColor = [UIColor blackColor];
+			fakeStatusBar.contentMode = UIViewContentModeRedraw;
+			fakeStatusBar.userInteractionEnabled = NO;
 
-	theScrollView.scrollsToTop = NO;
-	theScrollView.pagingEnabled = YES;
-	theScrollView.delaysContentTouches = NO;
-	theScrollView.showsVerticalScrollIndicator = NO;
-	theScrollView.showsHorizontalScrollIndicator = NO;
-	theScrollView.contentMode = UIViewContentModeRedraw;
-	theScrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-	theScrollView.backgroundColor = [UIColor clearColor];
-	theScrollView.userInteractionEnabled = YES;
-	theScrollView.autoresizesSubviews = NO;
-	theScrollView.delegate = self;
+			viewRect.origin.y += STATUS_HEIGHT; viewRect.size.height -= STATUS_HEIGHT;
+		}
+	}
 
+	CGRect scrollViewRect = CGRectInset(viewRect, -scrollViewOutset, 0.0f);
+	theScrollView = [[UIScrollView alloc] initWithFrame:scrollViewRect]; // All
+	theScrollView.autoresizesSubviews = NO; theScrollView.contentMode = UIViewContentModeRedraw;
+	theScrollView.showsHorizontalScrollIndicator = NO; theScrollView.showsVerticalScrollIndicator = NO;
+	theScrollView.scrollsToTop = NO; theScrollView.delaysContentTouches = NO; theScrollView.pagingEnabled = YES;
+	theScrollView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+	theScrollView.backgroundColor = [UIColor clearColor]; theScrollView.delegate = self;
 	[self.view addSubview:theScrollView];
 
-	CGRect toolbarRect = viewRect;
-	toolbarRect.size.height = TOOLBAR_HEIGHT;
+	CGRect toolbarRect = viewRect; toolbarRect.size.height = TOOLBAR_HEIGHT;
+//	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // ReaderMainToolbar
+//	mainToolbar.delegate = self; // ReaderMainToolbarDelegate
+//	[self.view addSubview:mainToolbar];
 
-	mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // At top
+    if( !_hidePageBar )
+    {
+        CGRect pagebarRect = self.view.bounds; pagebarRect.size.height = PAGEBAR_HEIGHT;
+        pagebarRect.origin.y = (self.view.bounds.size.height - pagebarRect.size.height);
+        mainPagebar = [[ReaderMainPagebar alloc] initWithFrame:pagebarRect document:document]; // ReaderMainPagebar
+        mainPagebar.delegate = self; // ReaderMainPagebarDelegate
+        [self.view addSubview:mainPagebar];
+    }
 
-	mainToolbar.delegate = self;
-
-	[self.view addSubview:mainToolbar];
-
-	CGRect pagebarRect = viewRect;
-	pagebarRect.size.height = PAGEBAR_HEIGHT;
-	pagebarRect.origin.y = (viewRect.size.height - PAGEBAR_HEIGHT);
-
-	mainPagebar = [[ReaderMainPagebar alloc] initWithFrame:pagebarRect document:document]; // At bottom
-
-	mainPagebar.delegate = self;
-
-	[self.view addSubview:mainPagebar];
+	if (fakeStatusBar != nil) [self.view addSubview:fakeStatusBar]; // Add status bar background view
 
 	UITapGestureRecognizer *singleTapOne = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)];
 	singleTapOne.numberOfTouchesRequired = 1; singleTapOne.numberOfTapsRequired = 1; singleTapOne.delegate = self;
@@ -375,13 +406,8 @@
 	[singleTapOne requireGestureRecognizerToFail:doubleTapOne]; // Single tap requires double tap to fail
 
 	contentViews = [NSMutableDictionary new]; lastHideTime = [NSDate date];
-    
-    [self addCloseButton];
-}
 
-- (void)viewDidLayoutSubviews
-{
-    [super viewDidLayoutSubviews];
+	minimumPage = 1; maximumPage = [document.pageCount integerValue];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -392,21 +418,21 @@
 	{
 		if (CGSizeEqualToSize(lastAppearSize, self.view.bounds.size) == false)
 		{
-			[self updateScrollViewContentViews]; // Update content views
+			[self updateContentViews:theScrollView]; // Update content views
 		}
 
 		lastAppearSize = CGSizeZero; // Reset view size tracking
 	}
+    
+    if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == true)
+    {
+        [self performSelector:@selector(showDocument) withObject:nil afterDelay:0.0];
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
-
-	if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero)) // First time
-	{
-		[self performSelector:@selector(showDocument:) withObject:nil afterDelay:0.02];
-	}
 
 #if (READER_DISABLE_IDLE == TRUE) // Option
 
@@ -443,9 +469,21 @@
 
 	theScrollView = nil; contentViews = nil; lastHideTime = nil;
 
+	documentInteraction = nil; printInteraction = nil;
+
 	lastAppearSize = CGSizeZero; currentPage = 0;
 
 	[super viewDidUnload];
+}
+
+- (BOOL)prefersStatusBarHidden
+{
+	return YES;
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle
+{
+	return UIStatusBarStyleLightContent;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -455,31 +493,23 @@
 
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration
 {
-	if (isVisible == NO) return; // iOS present modal bodge
+	if (userInterfaceIdiom == UIUserInterfaceIdiomPad) if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 
-	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
-	{
-		if (printInteraction != nil) [printInteraction dismissAnimated:NO];
-	}
+	ignoreDidScroll = YES;
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
 {
-	if (isVisible == NO) return; // iOS present modal bodge
-
-	[self updateScrollViewContentViews]; // Update content views
-
-	lastAppearSize = CGSizeZero; // Reset view size tracking
+	if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == false)
+	{
+		[self updateContentViews:theScrollView]; lastAppearSize = CGSizeZero;
+	}
 }
 
-/*
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-	//if (isVisible == NO) return; // iOS present modal bodge
-
-	//if (fromInterfaceOrientation == self.interfaceOrientation) return;
+	ignoreDidScroll = NO;
 }
-*/
 
 - (void)didReceiveMemoryWarning
 {
@@ -490,48 +520,24 @@
 	[super didReceiveMemoryWarning];
 }
 
-- (void)dealloc
-{
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
-}
+#pragma mark - UIScrollViewDelegate methods
 
-#pragma mark UIScrollViewDelegate methods
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    if (self.closeButtonStyle == ReaderCloseButtonStylePageArtboxTopRight )
-        [self fadeOutCloseButton];
+	if (ignoreDidScroll == NO) [self layoutContentViews:scrollView];
 }
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
-	__block NSInteger page = -1;
-    
-	CGFloat contentOffsetX = scrollView.contentOffset.x;
-    
-	[contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
-     ^(id key, id object, BOOL *stop)
-     {
-         ReaderContentView *contentView = object;
-         
-         if (contentView.frame.origin.x == contentOffsetX)
-         {
-             page = contentView.tag; *stop = YES;
-         }
-     }
-     ];
-    
-	if (page != -1) [self showDocumentPage:page]; // Show the page
+	[self handleScrollViewDidEnd:scrollView];
 }
 
 - (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
 {
-	[self showDocumentPage:theScrollView.tag]; // Show page
-    
-	theScrollView.tag = 0; // Clear page number tag
+	[self handleScrollViewDidEnd:scrollView];
 }
 
-#pragma mark UIGestureRecognizerDelegate methods
+#pragma mark - UIGestureRecognizerDelegate methods
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)recognizer shouldReceiveTouch:(UITouch *)touch
 {
@@ -540,47 +546,29 @@
 	return NO;
 }
 
-#pragma mark UIGestureRecognizer action methods
+#pragma mark - UIGestureRecognizer action methods
 
 - (void)decrementPageNumber
 {
-	if (theScrollView.tag == 0) // Scroll view did end
+	if ((maximumPage > minimumPage) && (currentPage != minimumPage))
 	{
-		NSInteger page = [document.pageNumber integerValue];
-		NSInteger maxPage = [document.pageCount integerValue];
-		NSInteger minPage = 1; // Minimum
+		CGPoint contentOffset = theScrollView.contentOffset; // Offset
 
-		if ((maxPage > minPage) && (page != minPage))
-		{
-			CGPoint contentOffset = theScrollView.contentOffset;
+		contentOffset.x -= theScrollView.bounds.size.width; // View X--
 
-			contentOffset.x -= theScrollView.bounds.size.width; // -= 1
-
-			[theScrollView setContentOffset:contentOffset animated:YES];
-
-			theScrollView.tag = (page - 1); // Decrement page number
-		}
+		[theScrollView setContentOffset:contentOffset animated:YES];
 	}
 }
 
 - (void)incrementPageNumber
 {
-	if (theScrollView.tag == 0) // Scroll view did end
+	if ((maximumPage > minimumPage) && (currentPage != maximumPage))
 	{
-		NSInteger page = [document.pageNumber integerValue];
-		NSInteger maxPage = [document.pageCount integerValue];
-		NSInteger minPage = 1; // Minimum
+		CGPoint contentOffset = theScrollView.contentOffset; // Offset
 
-		if ((maxPage > minPage) && (page != maxPage))
-		{
-			CGPoint contentOffset = theScrollView.contentOffset;
+		contentOffset.x += theScrollView.bounds.size.width; // View X++
 
-			contentOffset.x += theScrollView.bounds.size.width; // += 1
-
-			[theScrollView setContentOffset:contentOffset animated:YES];
-
-			theScrollView.tag = (page + 1); // Increment page number
-		}
+		[theScrollView setContentOffset:contentOffset animated:YES];
 	}
 }
 
@@ -590,19 +578,17 @@
 	{
 		CGRect viewRect = recognizer.view.bounds; // View bounds
 
-		CGPoint point = [recognizer locationInView:recognizer.view];
+		CGPoint point = [recognizer locationInView:recognizer.view]; // Point
 
-		CGRect areaRect = CGRectInset(viewRect, TAP_AREA_SIZE, 0.0f); // Area
+		CGRect areaRect = CGRectInset(viewRect, TAP_AREA_SIZE, 0.0f); // Area rect
 
-		if (CGRectContainsPoint(areaRect, point)) // Single tap is inside the area
+		if (CGRectContainsPoint(areaRect, point) == true) // Single tap is inside area
 		{
-			NSInteger page = [document.pageNumber integerValue]; // Current page #
+			NSNumber *key = [NSNumber numberWithInteger:currentPage]; // Page number key
 
-			NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
+			ReaderContentView *targetView = [contentViews objectForKey:key]; // View
 
-			ReaderContentView *targetView = [contentViews objectForKey:key];
-
-			id target = [targetView processSingleTap:recognizer]; // Target
+			id target = [targetView processSingleTap:recognizer]; // Target object
 
 			if (target != nil) // Handle the returned target object
 			{
@@ -616,7 +602,7 @@
 
 						if ([www hasPrefix:@"www"] == YES) // Check for 'www' prefix
 						{
-							NSString *http = [NSString stringWithFormat:@"http://%@", www];
+							NSString *http = [[NSString alloc] initWithFormat:@"http://%@", www];
 
 							url = [NSURL URLWithString:http]; // Proper http-based URL
 						}
@@ -629,13 +615,13 @@
 						#endif
 					}
 				}
-				else // Not a URL, so check for other possible object type
+				else // Not a URL, so check for another possible object type
 				{
 					if ([target isKindOfClass:[NSNumber class]]) // Goto page
 					{
-						NSInteger value = [target integerValue]; // Number
+						NSInteger number = [target integerValue]; // Number
 
-						[self showDocumentPage:value]; // Show the page
+						[self showDocumentPage:number]; // Show the page
 					}
 				}
 			}
@@ -643,7 +629,7 @@
 			{
 				if ([lastHideTime timeIntervalSinceNow] < -0.75) // Delay since hide
 				{
-					if ((mainToolbar.hidden == YES) || (mainPagebar.hidden == YES))
+					if ((mainToolbar.alpha < 1.0f) || (mainPagebar.alpha < 1.0f)) // Hidden
 					{
 						[mainToolbar showToolbar]; [mainPagebar showPagebar]; // Show
 					}
@@ -657,7 +643,7 @@
 		nextPageRect.size.width = TAP_AREA_SIZE;
 		nextPageRect.origin.x = (viewRect.size.width - TAP_AREA_SIZE);
 
-		if (CGRectContainsPoint(nextPageRect, point)) // page++ area
+		if (CGRectContainsPoint(nextPageRect, point) == true) // page++
 		{
 			[self incrementPageNumber]; return;
 		}
@@ -665,7 +651,7 @@
 		CGRect prevPageRect = viewRect;
 		prevPageRect.size.width = TAP_AREA_SIZE;
 
-		if (CGRectContainsPoint(prevPageRect, point)) // page-- area
+		if (CGRectContainsPoint(prevPageRect, point) == true) // page--
 		{
 			[self decrementPageNumber]; return;
 		}
@@ -678,28 +664,26 @@
 	{
 		CGRect viewRect = recognizer.view.bounds; // View bounds
 
-		CGPoint point = [recognizer locationInView:recognizer.view];
+		CGPoint point = [recognizer locationInView:recognizer.view]; // Point
 
-		CGRect zoomArea = CGRectInset(viewRect, TAP_AREA_SIZE, TAP_AREA_SIZE);
+		CGRect zoomArea = CGRectInset(viewRect, TAP_AREA_SIZE, TAP_AREA_SIZE); // Area
 
-		if (CGRectContainsPoint(zoomArea, point)) // Double tap is in the zoom area
+		if (CGRectContainsPoint(zoomArea, point) == true) // Double tap is inside zoom area
 		{
-			NSInteger page = [document.pageNumber integerValue]; // Current page #
+			NSNumber *key = [NSNumber numberWithInteger:currentPage]; // Page number key
 
-			NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
-
-			ReaderContentView *targetView = [contentViews objectForKey:key];
+			ReaderContentView *targetView = [contentViews objectForKey:key]; // View
 
 			switch (recognizer.numberOfTouchesRequired) // Touches count
 			{
-				case 1: // One finger double tap: zoom ++
+				case 1: // One finger double tap: zoom++
 				{
-					[targetView zoomIncrement]; break;
+					[targetView zoomIncrement:recognizer]; break;
 				}
 
-				case 2: // Two finger double tap: zoom --
+				case 2: // Two finger double tap: zoom--
 				{
-					[targetView zoomDecrement]; break;
+					[targetView zoomDecrement:recognizer]; break;
 				}
 			}
 
@@ -710,7 +694,7 @@
 		nextPageRect.size.width = TAP_AREA_SIZE;
 		nextPageRect.origin.x = (viewRect.size.width - TAP_AREA_SIZE);
 
-		if (CGRectContainsPoint(nextPageRect, point)) // page++ area
+		if (CGRectContainsPoint(nextPageRect, point) == true) // page++
 		{
 			[self incrementPageNumber]; return;
 		}
@@ -718,18 +702,18 @@
 		CGRect prevPageRect = viewRect;
 		prevPageRect.size.width = TAP_AREA_SIZE;
 
-		if (CGRectContainsPoint(prevPageRect, point)) // page-- area
+		if (CGRectContainsPoint(prevPageRect, point) == true) // page--
 		{
 			[self decrementPageNumber]; return;
 		}
 	}
 }
 
-#pragma mark ReaderContentViewDelegate methods
+#pragma mark - ReaderContentViewDelegate methods
 
 - (void)contentView:(ReaderContentView *)contentView touchesBegan:(NSSet *)touches
 {
-	if ((mainToolbar.hidden == NO) || (mainPagebar.hidden == NO))
+	if ((mainToolbar.alpha > 0.0f) || (mainPagebar.alpha > 0.0f))
 	{
 		if (touches.count == 1) // Single touches only
 		{
@@ -744,7 +728,7 @@
 
 		[mainToolbar hideToolbar]; [mainPagebar hidePagebar]; // Hide
 
-		lastHideTime = [NSDate date];
+		lastHideTime = [NSDate date]; // Set last hide time
 	}
 }
 
@@ -752,82 +736,61 @@
 {
     if( [self.delegate respondsToSelector:@selector(readerViewControllerContentOffsetChanged:zoomScale:)] )
         [self.delegate readerViewControllerContentOffsetChanged:offset zoomScale:zoomScale];
-    
-    [self positionCloseButtonForContentView:contentView scrollOffset:offset zoomScale:zoomScale];
 }
 
-- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated
-{
-    NSInteger page = [document.pageNumber integerValue]; // Current page #
-    NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
-    ReaderContentView *targetView = [contentViews objectForKey:key];
-    
-    [targetView setZoomScale:zoomScale animated:animated];
-    [targetView setContentOffset:contentOffset animated:animated];
-}
-
-- (void)setToolbarsVisible:(BOOL)toolbarsVisible
-{
-    [mainPagebar hidePagebar];
-    [mainToolbar hideToolbar];
-}
-
-#pragma mark ReaderMainToolbarDelegate methods
+#pragma mark - ReaderMainToolbarDelegate methods
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar doneButton:(UIButton *)button
 {
 #if (READER_STANDALONE == FALSE) // Option
 
-//	[document saveReaderDocument]; // Save any ReaderDocument object changes
-
-	[[ReaderThumbQueue sharedInstance] cancelOperationsWithGUID:document.guid];
-
-	[[ReaderThumbCache sharedInstance] removeAllObjects]; // Empty the thumb cache
-
-	if (printInteraction != nil) [printInteraction dismissAnimated:NO]; // Dismiss
-
-	if ([delegate respondsToSelector:@selector(dismissReaderViewController:)] == YES)
-	{
-		[delegate dismissReaderViewController:self]; // Dismiss the ReaderViewController
-	}
-	else // We have a "Delegate must respond to -dismissReaderViewController: error"
-	{
-		NSAssert(NO, @"Delegate must respond to -dismissReaderViewController:");
-	}
+	[self closeDocument]; // Close ReaderViewController
 
 #endif // end of READER_STANDALONE Option
 }
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar thumbsButton:(UIButton *)button
 {
-	if (printInteraction != nil) [printInteraction dismissAnimated:NO]; // Dismiss
+#if (READER_ENABLE_THUMBS == TRUE) // Option
+
+	if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 
 	ThumbsViewController *thumbsViewController = [[ThumbsViewController alloc] initWithReaderDocument:document];
 
-	thumbsViewController.delegate = self; thumbsViewController.title = self.title;
+	thumbsViewController.title = self.title; thumbsViewController.delegate = self; // ThumbsViewControllerDelegate
 
 	thumbsViewController.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
 	thumbsViewController.modalPresentationStyle = UIModalPresentationFullScreen;
 
-	[self presentViewController:thumbsViewController animated:NO completion:nil];
+	[self presentViewController:thumbsViewController animated:NO completion:NULL];
+
+#endif // end of READER_ENABLE_THUMBS Option
 }
 
-- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(UIButton *)button
+- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar exportButton:(UIButton *)button
 {
-#if (READER_ENABLE_PRINT == TRUE) // Option
+	if (printInteraction != nil) [printInteraction dismissAnimated:YES];
 
-	Class printInteractionController = NSClassFromString(@"UIPrintInteractionController");
+	NSURL *fileURL = document.fileURL; // Document file URL
 
-	if ((printInteractionController != nil) && [printInteractionController isPrintingAvailable])
+	documentInteraction = [UIDocumentInteractionController interactionControllerWithURL:fileURL];
+
+	documentInteraction.delegate = self; // UIDocumentInteractionControllerDelegate
+
+	[documentInteraction presentOpenInMenuFromRect:button.bounds inView:button animated:YES];
+}
+
+- (void)tappedInToolbar:(ReaderMainToolbar *)toolbar printButton:(id)sender
+{
+	if ([UIPrintInteractionController isPrintingAvailable] == YES)
 	{
 		NSURL *fileURL = document.fileURL; // Document file URL
 
-		printInteraction = [printInteractionController sharedPrintController];
-
-		if ([printInteractionController canPrintURL:fileURL] == YES) // Check first
+		if ([UIPrintInteractionController canPrintURL:fileURL] == YES)
 		{
-			UIPrintInfo *printInfo = [NSClassFromString(@"UIPrintInfo") printInfo];
+			printInteraction = [UIPrintInteractionController sharedPrintController];
 
+			UIPrintInfo *printInfo = [UIPrintInfo printInfo];
 			printInfo.duplex = UIPrintInfoDuplexLongEdge;
 			printInfo.outputType = UIPrintInfoOutputGeneral;
 			printInfo.jobName = document.fileName;
@@ -836,18 +799,34 @@
 			printInteraction.printingItem = fileURL;
 			printInteraction.showsPageRange = YES;
 
-			if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
+			if (userInterfaceIdiom == UIUserInterfaceIdiomPad) // Large device printing
 			{
-				[printInteraction presentFromRect:button.bounds inView:button animated:YES completionHandler:
-					^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
-					{
-						#ifdef DEBUG
-							if ((completed == NO) && (error != nil)) NSLog(@"%s %@", __FUNCTION__, error);
-						#endif
-					}
-				];
+                if( [sender isKindOfClass:[UIButton class]] )
+                {
+                    UIButton *button = (UIButton *)sender;
+                    [printInteraction presentFromRect:button.bounds inView:button animated:YES completionHandler:
+                        ^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
+                        {
+                            #ifdef DEBUG
+                                if ((completed == NO) && (error != nil)) NSLog(@"%s %@", __FUNCTION__, error);
+                            #endif
+                        }
+                    ];
+                }
+                else if( [sender isKindOfClass:[UIBarButtonItem class]] )
+                {
+                    UIBarButtonItem *barButtonItem = (UIBarButtonItem *)sender;
+                    [printInteraction presentFromBarButtonItem:barButtonItem animated:YES completionHandler:
+                         ^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
+                         {
+                            #ifdef DEBUG
+                                 if ((completed == NO) && (error != nil)) NSLog(@"%s %@", __FUNCTION__, error);
+                            #endif
+                         }
+                     ];
+                }
 			}
-			else // Presume UIUserInterfaceIdiomPhone
+			else // Handle printing on small device
 			{
 				[printInteraction presentAnimated:YES completionHandler:
 					^(UIPrintInteractionController *pic, BOOL completed, NSError *error)
@@ -860,27 +839,23 @@
 			}
 		}
 	}
-
-#endif // end of READER_ENABLE_PRINT Option
 }
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar emailButton:(UIButton *)button
 {
-#if (READER_ENABLE_MAIL == TRUE) // Option
-
 	if ([MFMailComposeViewController canSendMail] == NO) return;
 
 	if (printInteraction != nil) [printInteraction dismissAnimated:YES];
 
 	unsigned long long fileSize = [document.fileSize unsignedLongLongValue];
 
-	if (fileSize < (unsigned long long)15728640) // Check attachment size limit (15MB)
+	if (fileSize < 15728640ull) // Check attachment size limit (15MB)
 	{
-		NSURL *fileURL = document.fileURL; NSString *fileName = document.fileName; // Document
+		NSURL *fileURL = document.fileURL; NSString *fileName = document.fileName;
 
 		NSData *attachment = [NSData dataWithContentsOfURL:fileURL options:(NSDataReadingMapped|NSDataReadingUncached) error:nil];
 
-		if (attachment != nil) // Ensure that we have valid document file attachment data
+		if (attachment != nil) // Ensure that we have valid document file attachment data available
 		{
 			MFMailComposeViewController *mailComposer = [MFMailComposeViewController new];
 
@@ -891,261 +866,130 @@
 			mailComposer.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
 			mailComposer.modalPresentationStyle = UIModalPresentationFormSheet;
 
-			mailComposer.mailComposeDelegate = self; // Set the delegate
+			mailComposer.mailComposeDelegate = self; // MFMailComposeViewControllerDelegate
 
-			[self presentViewController:mailComposer animated:NO completion:nil];
+			[self presentViewController:mailComposer animated:YES completion:NULL];
 		}
 	}
-
-#endif // end of READER_ENABLE_MAIL Option
 }
 
 - (void)tappedInToolbar:(ReaderMainToolbar *)toolbar markButton:(UIButton *)button
 {
+#if (READER_BOOKMARKS == TRUE) // Option
+
 	if (printInteraction != nil) [printInteraction dismissAnimated:YES];
 
-	NSInteger page = [document.pageNumber integerValue];
+	if ([document.bookmarks containsIndex:currentPage]) // Remove bookmark
+	{
+		[document.bookmarks removeIndex:currentPage]; [mainToolbar setBookmarkState:NO];
+	}
+	else // Add the bookmarked page number to the bookmark index set
+	{
+		[document.bookmarks addIndex:currentPage]; [mainToolbar setBookmarkState:YES];
+	}
 
-	if ([document.bookmarks containsIndex:page]) // Remove bookmark
-	{
-		[mainToolbar setBookmarkState:NO]; [document.bookmarks removeIndex:page];
-	}
-	else // Add the bookmarked page index to the bookmarks set
-	{
-		[mainToolbar setBookmarkState:YES]; [document.bookmarks addIndex:page];
-	}
+#endif // end of READER_BOOKMARKS Option
 }
 
-#pragma mark MFMailComposeViewControllerDelegate methods
+#pragma mark - MFMailComposeViewControllerDelegate methods
 
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
-	#ifdef DEBUG
-		if ((result == MFMailComposeResultFailed) && (error != NULL)) NSLog(@"%@", error);
-	#endif
+#ifdef DEBUG
+	if ((result == MFMailComposeResultFailed) && (error != NULL)) NSLog(@"%@", error);
+#endif
 
-	[self dismissViewControllerAnimated:YES completion:nil];
+	[self dismissViewControllerAnimated:YES completion:NULL];
 }
 
-#pragma mark ThumbsViewControllerDelegate methods
+#pragma mark - UIDocumentInteractionControllerDelegate methods
 
-- (void)dismissThumbsViewController:(ThumbsViewController *)viewController
+- (void)documentInteractionControllerDidDismissOpenInMenu:(UIDocumentInteractionController *)controller
 {
-	[self updateToolbarBookmarkIcon]; // Update bookmark icon
-
-	[self dismissViewControllerAnimated:NO completion:nil];
+	documentInteraction = nil;
 }
+
+#pragma mark - ThumbsViewControllerDelegate methods
 
 - (void)thumbsViewController:(ThumbsViewController *)viewController gotoPage:(NSInteger)page
 {
-	[self showDocumentPage:page]; // Show the page
+#if (READER_ENABLE_THUMBS == TRUE) // Option
+
+	[self showDocumentPage:page];
+
+#endif // end of READER_ENABLE_THUMBS Option
 }
 
-#pragma mark ReaderMainPagebarDelegate methods
+- (void)dismissThumbsViewController:(ThumbsViewController *)viewController
+{
+#if (READER_ENABLE_THUMBS == TRUE) // Option
+
+	[self dismissViewControllerAnimated:NO completion:NULL];
+
+#endif // end of READER_ENABLE_THUMBS Option
+}
+
+#pragma mark - ReaderMainPagebarDelegate methods
 
 - (void)pagebar:(ReaderMainPagebar *)pagebar gotoPage:(NSInteger)page
 {
-	[self showDocumentPage:page]; // Show the page
+	[self showDocumentPage:page];
 }
 
-#pragma mark UIApplication notification methods
+#pragma mark - UIApplication notification methods
 
-- (void)applicationWill:(NSNotification *)notification
+- (void)applicationWillResign:(NSNotification *)notification
 {
-//	[document saveReaderDocument]; // Save any ReaderDocument object changes
+	[document archiveDocumentProperties]; // Save any ReaderDocument changes
 
-	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
-	{
-		if (printInteraction != nil) [printInteraction dismissAnimated:NO];
-	}
+	if (userInterfaceIdiom == UIUserInterfaceIdiomPad) if (printInteraction != nil) [printInteraction dismissAnimated:NO];
 }
 
-#pragma mark UI Customization Methods
+#pragma mark - Navigation Actions
 
-- (void)closeButtonTapped:(id)sender
+- (void)doneButtonSelected:(id)sender
 {
-    [self tappedInToolbar:nil doneButton:sender];
+    [self closeDocument];
 }
 
-- (void)setCloseButtonImage:(UIImage *)image
+- (void)emailButtonSelected:(id)sender
 {
-    if (!image)
-        return;
+    [self tappedInToolbar:nil emailButton:nil];
+}
+
+- (void)printButtonSelected:(id)sender
+{
+    [self tappedInToolbar:nil printButton:sender];
+}
+
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated
+{
+    NSInteger page = [document.pageNumber integerValue]; // Current page #
+    NSNumber *key = [NSNumber numberWithInteger:page]; // Page number key
+    ReaderContentView *targetView = [contentViews objectForKey:key];
     
-    _closeButtonImage = image;
-    
-    [self addCloseButton];
+    [targetView setZoomScale:zoomScale animated:animated];
+    [targetView setContentOffset:contentOffset animated:animated];
+}
+
+- (void)hidePageBar
+{
+    _hidePageBar = YES;
+    [mainPagebar hidePagebar];
 }
 
 - (void)setToolbarsEnabled:(BOOL)toolbarsEnabled
 {
     if (toolbarsEnabled)
     {
-        if (![mainToolbar superview])
-           [self.view addSubview:mainToolbar];
-        
         if (![mainPagebar superview])
             [self.view addSubview:mainPagebar];
     }
     else
     {
-        if ([mainToolbar superview])
-            [mainToolbar removeFromSuperview];
-        
         if ([mainPagebar superview])
             [mainPagebar removeFromSuperview];
     }
-}
-
-- (void)addCloseButton
-{
-    if ([_closeButton superview])
-        [_closeButton removeFromSuperview];
-    
-    CGFloat closeButtonWidth;
-    CGFloat closeButtonHeight;
-    CGFloat closeButtonY;
-    
-    if (_closeButtonImage)
-    {
-        _closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        closeButtonWidth = _closeButtonImage.size.width;
-        closeButtonHeight = _closeButtonImage.size.height;
-        [_closeButton setImage:_closeButtonImage forState:UIControlStateNormal];
-    }
-    else
-    {
-        _closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        closeButtonWidth = 72.0f;
-        closeButtonHeight = 44.0f;
-        [_closeButton setTitle:@"Close" forState:UIControlStateNormal];
-        [_closeButton setBackgroundColor:[UIColor lightGrayColor]];
-        [_closeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [_closeButton.titleLabel setFont:[UIFont systemFontOfSize:18.0f]];
-    }
-    closeButtonY = ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) ? 23.0f : 3.0f;
-    
-    [_closeButton setFrame:CGRectMake(CGRectGetWidth(self.view.bounds) - closeButtonWidth - CLOSE_BUTTON_PADDING, closeButtonY, closeButtonWidth, closeButtonHeight)];
-    [_closeButton addTarget:self action:@selector(closeButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-    [_closeButton setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin];
-    
-    switch (self.closeButtonStyle) {
-        case ReaderCloseButtonStyleViewBoundsTopRight:
-            [_closeButton setAlpha:0.8];
-            break;
-        
-        case ReaderCloseButtonStylePageArtboxTopRight:
-            [_closeButton setAlpha:0.0];
-            break;
-            
-        default:
-            break;
-    }
-    
-    [self addPageChangeObservers];
-    [self.view addSubview:_closeButton];
-}
-
-- (void)addPageChangeObservers
-{
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateCloseButton:) name:kReaderPageFrameForCurrentPageNotification object:nil];
-}
-
-- (void)initialCloseButtonPlacement
-{
-    CGFloat contentOffsetX = theScrollView.contentOffset.x;
-    
-    [contentViews enumerateKeysAndObjectsUsingBlock: // Enumerate content views
-     ^(id key, id object, BOOL *stop)
-     {
-         ReaderContentView *contentView = object;
-         
-         if (contentView.frame.origin.x == contentOffsetX)
-         {
-             [contentView becomeVisibleInView:self.view];
-             *stop = YES;
-         }
-     }
-     ];
-}
-
-- (void)updateCloseButton:(NSNotification *)notification
-{
-    NSDictionary *userInfo = notification.userInfo;
-    
-    CGRect pageRect = [userInfo[kReaderPageFrameUserInfoKey] CGRectValue];
-    
-    CGRect closeButtonFrame = self.closeButton.frame;
-    
-    CGFloat originX;
-    
-    switch (self.closeButtonStyle) {
-        case ReaderCloseButtonStyleViewBoundsTopRight:
-        {
-            originX = CGRectGetWidth(self.view.bounds) - CGRectGetWidth(closeButtonFrame) - CLOSE_BUTTON_PADDING;
-        }
-            break;
-            
-        case ReaderCloseButtonStylePageArtboxTopRight:
-        {
-            UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-            NSLog(UIInterfaceOrientationIsLandscape(orientation) ? @"landscape" : @"portrait");
-            
-            if( CGRectGetWidth(pageRect) >= CGRectGetWidth(self.view.bounds) )
-            {
-                originX = CGRectGetWidth(self.view.bounds) - CGRectGetWidth(closeButtonFrame) - CLOSE_BUTTON_PADDING;
-            }
-            else
-            {
-                originX = CGRectGetMaxX(pageRect) - CGRectGetWidth(closeButtonFrame) - CLOSE_BUTTON_PADDING;
-            }
-        }
-            break;
-            
-        default:
-            break;
-    }
-
-    
-    CGRect newCloseButtonFrame = CGRectMake(originX, 20.0f, CGRectGetWidth(closeButtonFrame), CGRectGetHeight(closeButtonFrame));
-    
-    self.closeButton.frame = newCloseButtonFrame;
-    
-    _closeButton.alpha = 0.0f;
-    
-    [UIView animateWithDuration:0.3
-                          delay:0.0
-                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-                         _closeButton.alpha = 0.8f;
-                     }
-                     completion:nil];
-
-}
-
-- (void)fadeOutCloseButton
-{
-    [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState animations:^{
-        self.closeButton.alpha = 0.0;
-    } completion:nil];
-}
-
-#pragma mark - UIScrollView Zoom Delegate Methods
-
-- (void)contentViewWillBeginZooming:(ReaderContentView *)contentView
-{
-    [self fadeOutCloseButton];
-}
-
-- (void)contentViewWillBeginDragging:(ReaderContentView *)contentView
-{
-    [self fadeOutCloseButton];
-}
-
-- (void)positionCloseButtonForContentView:(ReaderContentView *)contentView scrollOffset:(CGPoint)offset zoomScale:(CGFloat)zoomScale
-{
-    NSLog(@"Scroll %@ contentOffset:%@ scrollOffset:%@ zoomScale:%f", contentView, NSStringFromCGPoint(contentView.contentOffset), NSStringFromCGPoint(offset), zoomScale);
-    [contentView becomeVisibleInView:self.view];
 }
 
 @end

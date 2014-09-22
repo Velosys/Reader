@@ -1,9 +1,9 @@
 //
 //	ReaderViewController.h
-//	Reader v2.6.0
+//	Reader v2.8.0
 //
 //	Created by Julius Oklamcak on 2011-07-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,8 @@
 
 @required // Delegate protocols
 - (void)dismissReaderViewController:(ReaderViewController *)viewController;
+- (void)readerViewControllerPageChangedTo:(NSInteger)newPage;
+- (void)readerViewControllerContentOffsetChanged:(CGPoint)newContentOffset zoomScale:(CGFloat)zoomScale;
 
 @optional
 - (void)readerViewControllerPageChangedTo:(NSInteger)newPage;
@@ -48,9 +50,17 @@ typedef enum {
 
 @interface ReaderViewController : UIViewController
 
-@property (nonatomic, unsafe_unretained, readwrite) id <ReaderViewControllerDelegate> delegate;
+@property (nonatomic, weak, readwrite) id <ReaderViewControllerDelegate> delegate;
 
-- (id)initWithReaderDocument:(ReaderDocument *)object;
+- (instancetype)initWithReaderDocument:(ReaderDocument *)object;
+
+- (void)showDocumentPage:(NSInteger)page;
+
+- (void)setContentOffset:(CGPoint)contentOffset zoomScale:(CGFloat)zoomScale animated:(BOOL)animated;
+
+- (void)hidePageBar;
+
+- (void)setToolbarsEnabled:(BOOL)toolbarsEnabled;
 
 - (void)showDocumentPage:(NSInteger)page;
 

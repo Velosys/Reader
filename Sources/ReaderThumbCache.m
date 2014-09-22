@@ -1,9 +1,9 @@
 //
 //	ReaderThumbCache.m
-//	Reader v2.6.0
+//	Reader v2.8.0
 //
 //	Created by Julius Oklamcak on 2011-09-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -27,17 +27,18 @@
 #import "ReaderThumbQueue.h"
 #import "ReaderThumbFetch.h"
 #import "ReaderThumbView.h"
+#import "ReaderDocument.h"
 
 @implementation ReaderThumbCache
 {
 	NSCache *thumbCache;
 }
 
-#pragma mark Constants
+#pragma mark - Constants
 
 #define CACHE_SIZE 2097152
 
-#pragma mark ReaderThumbCache class methods
+#pragma mark - ReaderThumbCache class methods
 
 + (ReaderThumbCache *)sharedInstance
 {
@@ -50,104 +51,48 @@
 	return object; // ReaderThumbCache singleton
 }
 
-+ (NSString *)appCachesPath
++ (NSString *)thumbCachePathForDocument:(ReaderDocument *)document
 {
-	static dispatch_once_t predicate = 0;
+    NSString *cachesPath = [document fullCachePath];
 
-	static NSString *theCachesPath = nil; // Application caches path string
-
-	dispatch_once(&predicate, // Save a copy of the application caches path the first time it is needed
-	^{
-		NSArray *cachesPaths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-
-		theCachesPath = [[cachesPaths objectAtIndex:0] copy]; // Keep a copy for later abusage
-	});
-
-	return theCachesPath;
+	return [cachesPath stringByAppendingPathComponent:document.guid]; // Append GUID
 }
 
-+ (NSString *)thumbCachePathForGUID:(NSString *)guid
-{
-	NSString *cachesPath = [ReaderThumbCache appCachesPath]; // Caches path
-
-	return [cachesPath stringByAppendingPathComponent:guid]; // Append GUID
-}
-
-+ (void)createThumbCacheWithGUID:(NSString *)guid
++ (void)createThumbCacheForDocument:(ReaderDocument *)document
 {
 	NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
-	NSString *cachePath = [ReaderThumbCache thumbCachePathForGUID:guid]; // Thumb cache path
+	NSString *cachePath = [ReaderThumbCache thumbCachePathForDocument:document]; // Thumb cache path
 
 	[fileManager createDirectoryAtPath:cachePath withIntermediateDirectories:NO attributes:nil error:NULL];
 }
 
-+ (void)removeThumbCacheWithGUID:(NSString *)guid
++ (void)removeThumbCacheForDocument:(ReaderDocument *)document
 {
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0),
 	^{
 		NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
-		NSString *cachePath = [ReaderThumbCache thumbCachePathForGUID:guid]; // Thumb cache path
+		NSString *cachePath = [ReaderThumbCache thumbCachePathForDocument:document]; // Thumb cache path
 
 		[fileManager removeItemAtPath:cachePath error:NULL]; // Remove thumb cache directory
 	});
 }
 
-+ (void)touchThumbCacheWithGUID:(NSString *)guid
++ (void)touchThumbCacheForDocument:(ReaderDocument *)document
 {
 	NSFileManager *fileManager = [NSFileManager new]; // File manager instance
 
-	NSString *cachePath = [ReaderThumbCache thumbCachePathForGUID:guid]; // Thumb cache path
+	NSString *cachePath = [ReaderThumbCache thumbCachePathForDocument:document]; // Thumb cache path
 
 	NSDictionary *attributes = [NSDictionary dictionaryWithObject:[NSDate date] forKey:NSFileModificationDate];
 
 	[fileManager setAttributes:attributes ofItemAtPath:cachePath error:NULL]; // New modification date
 }
 
-+ (void)purgeThumbCachesOlderThan:(NSTimeInterval)age
-{
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0),
-	^{
-		NSDate *now = [NSDate date]; // Right about now time
+#pragma mark - ReaderThumbCache instance methods
 
-		NSString *cachesPath = [ReaderThumbCache appCachesPath]; // Caches path
-
-		NSFileManager *fileManager = [NSFileManager new]; // File manager instance
-
-		NSArray *cachesList = [fileManager contentsOfDirectoryAtPath:cachesPath error:NULL];
-
-		if (cachesList != nil) // Process caches directory contents
-		{
-			for (NSString *cacheName in cachesList) // Enumerate directory contents
-			{
-				if (cacheName.length == 36) // This is a very hacky cache ident kludge
-				{
-					NSString *cachePath = [cachesPath stringByAppendingPathComponent:cacheName];
-
-					NSDictionary *attributes = [fileManager attributesOfItemAtPath:cachePath error:NULL];
-
-					NSDate *cacheDate = [attributes objectForKey:NSFileModificationDate]; // Cache date
-
-					NSTimeInterval seconds = [now timeIntervalSinceDate:cacheDate]; // Cache age
-
-					if (seconds > age) // Older than so remove the thumb cache
-					{
-						[fileManager removeItemAtPath:cachePath error:NULL];
-
-						#ifdef DEBUG
-							NSLog(@"%s purged %@", __FUNCTION__, cacheName);
-						#endif
-					}
-				}
-			}
-		}
-	});
-}
-
-#pragma mark ReaderThumbCache instance methods
-
-- (id)init
+- (instancetype)init
 {
 	if ((self = [super init])) // Initialize
 	{

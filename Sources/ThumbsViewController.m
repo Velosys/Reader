@@ -1,9 +1,9 @@
 //
 //	ThumbsViewController.m
-//	Reader v2.6.1
+//	Reader v2.8.1
 //
 //	Created by Julius Oklamcak on 2011-09-01.
-//	Copyright © 2011-2013 Julius Oklamcak. All rights reserved.
+//	Copyright © 2011-2014 Julius Oklamcak. All rights reserved.
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -53,36 +53,38 @@
 	BOOL showBookmarked;
 }
 
-#pragma mark Constants
+#pragma mark - Constants
+
+#define STATUS_HEIGHT 20.0f
 
 #define TOOLBAR_HEIGHT 44.0f
 
 #define PAGE_THUMB_SMALL 160
 #define PAGE_THUMB_LARGE 256
 
-#pragma mark Properties
+#pragma mark - Properties
 
 @synthesize delegate;
 
-#pragma mark UIViewController methods
+#pragma mark - UIViewController methods
 
-- (id)initWithReaderDocument:(ReaderDocument *)object
+- (instancetype)initWithReaderDocument:(ReaderDocument *)object
 {
-	id thumbs = nil; // ThumbsViewController object
-
-	if ((object != nil) && ([object isKindOfClass:[ReaderDocument class]]))
+	if ((self = [super initWithNibName:nil bundle:nil])) // Initialize superclass
 	{
-		if ((self = [super initWithNibName:nil bundle:nil])) // Designated initializer
+		if ((object != nil) && ([object isKindOfClass:[ReaderDocument class]])) // Valid object
 		{
 			updateBookmarked = YES; bookmarked = [NSMutableArray new]; // Bookmarked pages
 
 			document = object; // Retain the ReaderDocument object for our use
-
-			thumbs = self; // Return an initialized ThumbsViewController object
+		}
+		else // Invalid ReaderDocument object
+		{
+			self = nil;
 		}
 	}
 
-	return thumbs;
+	return self;
 }
 
 - (void)viewDidLoad
@@ -91,44 +93,55 @@
 
 	assert(delegate != nil); assert(document != nil);
 
-	self.view.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
+	self.view.backgroundColor = [UIColor grayColor]; // Neutral gray
 
-	CGRect viewRect = self.view.bounds; // View controller's view bounds
+	CGRect scrollViewRect = self.view.bounds; UIView *fakeStatusBar = nil;
+
+	if ([self respondsToSelector:@selector(edgesForExtendedLayout)]) // iOS 7+
+	{
+		if ([self prefersStatusBarHidden] == NO) // Visible status bar
+		{
+			CGRect statusBarRect = self.view.bounds; // Status bar frame
+			statusBarRect.size.height = STATUS_HEIGHT; // Default status height
+			fakeStatusBar = [[UIView alloc] initWithFrame:statusBarRect]; // UIView
+			fakeStatusBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+			fakeStatusBar.backgroundColor = [UIColor blackColor];
+			fakeStatusBar.contentMode = UIViewContentModeRedraw;
+			fakeStatusBar.userInteractionEnabled = NO;
+
+			scrollViewRect.origin.y += STATUS_HEIGHT; scrollViewRect.size.height -= STATUS_HEIGHT;
+		}
+	}
 
 	NSString *toolbarTitle = [document.fileName stringByDeletingPathExtension];
 
-	CGRect toolbarRect = viewRect; toolbarRect.size.height = TOOLBAR_HEIGHT;
-
-	mainToolbar = [[ThumbsMainToolbar alloc] initWithFrame:toolbarRect title:toolbarTitle]; // At top
-
-	mainToolbar.delegate = self;
-
+	CGRect toolbarRect = scrollViewRect; // Toolbar frame
+	toolbarRect.size.height = TOOLBAR_HEIGHT; // Default toolbar height
+	mainToolbar = [[ThumbsMainToolbar alloc] initWithFrame:toolbarRect title:toolbarTitle]; // ThumbsMainToolbar
+	mainToolbar.delegate = self; // ThumbsMainToolbarDelegate
 	[self.view addSubview:mainToolbar];
 
-	CGRect thumbsRect = viewRect; UIEdgeInsets insets = UIEdgeInsetsZero;
+	if (fakeStatusBar != nil) [self.view addSubview:fakeStatusBar]; // Add status bar background view
 
-	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
+	UIEdgeInsets scrollViewInsets = UIEdgeInsetsZero; // Scroll view toolbar insets
+
+	if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) // iPad
 	{
-		thumbsRect.origin.y += TOOLBAR_HEIGHT; thumbsRect.size.height -= TOOLBAR_HEIGHT;
+		scrollViewRect.origin.y += TOOLBAR_HEIGHT; scrollViewRect.size.height -= TOOLBAR_HEIGHT;
 	}
 	else // Set UIScrollView insets for non-UIUserInterfaceIdiomPad case
 	{
-		insets.top = TOOLBAR_HEIGHT;
+		scrollViewInsets.top = TOOLBAR_HEIGHT;
 	}
 
-	theThumbsView = [[ReaderThumbsView alloc] initWithFrame:thumbsRect]; // Rest
-
-	theThumbsView.contentInset = insets; theThumbsView.scrollIndicatorInsets = insets;
-
-	theThumbsView.delegate = self;
-
+	theThumbsView = [[ReaderThumbsView alloc] initWithFrame:scrollViewRect]; // ReaderThumbsView
+	theThumbsView.contentInset = scrollViewInsets; theThumbsView.scrollIndicatorInsets = scrollViewInsets;
+	theThumbsView.delegate = self; // ReaderThumbsViewDelegate
 	[self.view insertSubview:theThumbsView belowSubview:mainToolbar];
 
 	BOOL large = ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad);
-
-	NSInteger thumbSize = (large ? PAGE_THUMB_LARGE : PAGE_THUMB_SMALL); // Thumb dimensions
-
-	[theThumbsView setThumbSize:CGSizeMake(thumbSize, thumbSize)]; // Thumb size based on device
+	CGFloat thumbSize = (large ? PAGE_THUMB_LARGE : PAGE_THUMB_SMALL); // Thumb dimensions
+	[theThumbsView setThumbSize:CGSizeMake(thumbSize, thumbSize)]; // Set the thumb size
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -164,6 +177,16 @@
 	[super viewDidUnload];
 }
 
+- (BOOL)prefersStatusBarHidden
+{
+	return YES;
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle
+{
+	return UIStatusBarStyleLightContent;
+}
+
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	return YES;
@@ -193,7 +216,7 @@
 	[super didReceiveMemoryWarning];
 }
 
-#pragma mark ThumbsMainToolbarDelegate methods
+#pragma mark - ThumbsMainToolbarDelegate methods
 
 - (void)tappedInToolbar:(ThumbsMainToolbar *)toolbar showControl:(UISegmentedControl *)control
 {
@@ -242,7 +265,7 @@
 	[delegate dismissThumbsViewController:self]; // Dismiss thumbs display
 }
 
-#pragma mark UIThumbsViewDelegate methods
+#pragma mark - UIThumbsViewDelegate methods
 
 - (NSUInteger)numberOfThumbsInThumbsView:(ReaderThumbsView *)thumbsView
 {
@@ -260,13 +283,13 @@
 
 	NSInteger page = (showBookmarked ? [[bookmarked objectAtIndex:index] integerValue] : (index + 1));
 
-	[thumbCell showText:[NSString stringWithFormat:@"%d", page]]; // Page number place holder
+	[thumbCell showText:[[NSString alloc] initWithFormat:@"%i", (int)page]]; // Page number place holder
 
 	[thumbCell showBookmark:[document.bookmarks containsIndex:page]]; // Show bookmarked status
 
 	NSURL *fileURL = document.fileURL; NSString *guid = document.guid; NSString *phrase = document.password; // Document info
 
-	ReaderThumbRequest *thumbRequest = [ReaderThumbRequest newForView:thumbCell fileURL:fileURL password:phrase guid:guid page:page size:size];
+	ReaderThumbRequest *thumbRequest = [ReaderThumbRequest newForView:thumbCell document:document page:page size:size];
 
 	UIImage *image = [[ReaderThumbCache sharedInstance] thumbRequest:thumbRequest priority:YES]; // Request the thumbnail
 
@@ -321,11 +344,11 @@
 	CGRect defaultRect;
 }
 
-#pragma mark Constants
+#pragma mark - Constants
 
 #define CONTENT_INSET 8.0f
 
-#pragma mark ThumbsPageThumb instance methods
+#pragma mark - ThumbsPageThumb instance methods
 
 - (CGRect)markRectInImageView
 {
@@ -336,7 +359,7 @@
 	return iconRect; // Frame position rect inside of image view
 }
 
-- (id)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame
 {
 	if ((self = [super initWithFrame:frame]))
 	{
@@ -348,7 +371,7 @@
 
 		CGFloat newWidth = ((defaultRect.size.width / 4.0f) * 3.0f);
 
-		CGFloat offsetX = ((defaultRect.size.width - newWidth) / 2.0f);
+		CGFloat offsetX = ((defaultRect.size.width - newWidth) * 0.5f);
 
 		defaultRect.size.width = newWidth; defaultRect.origin.x += offsetX;
 
@@ -362,20 +385,7 @@
 		textLabel.userInteractionEnabled = NO;
 		textLabel.contentMode = UIViewContentModeRedraw;
 		textLabel.autoresizingMask = UIViewAutoresizingNone;
-
-        if( [[UIDevice currentDevice] systemMajorVersion] >= 6 )
-        {
-            textLabel.textAlignment = NSTextAlignmentCenter;
-        }
-        else
-        {
-            #pragma clang diagnostic push
-            #pragma clang diagnostic ignored "-Wconversion"
-            #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            textLabel.textAlignment = UITextAlignmentCenter;
-            #pragma clang diagnostic pop
-        }
-
+		textLabel.textAlignment = NSTextAlignmentCenter;
 		textLabel.font = [UIFont systemFontOfSize:fontSize];
 		textLabel.textColor = [UIColor colorWithWhite:0.24f alpha:1.0f];
 		textLabel.backgroundColor = [UIColor whiteColor];
@@ -412,6 +422,7 @@
 		[imageView addSubview:tintView];
 
 		UIImage *image = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Mark-Y.png"];
+
 		bookMark = [[UIImageView alloc] initWithImage:image];
 
 		bookMark.hidden = YES;
@@ -434,8 +445,8 @@
 
 - (void)showImage:(UIImage *)image
 {
-	NSInteger x = (self.bounds.size.width / 2.0f);
-	NSInteger y = (self.bounds.size.height / 2.0f);
+	NSInteger x = (self.bounds.size.width * 0.5f);
+	NSInteger y = (self.bounds.size.height * 0.5f);
 
 	CGPoint location = CGPointMake(x, y); // Center point
 
