@@ -25,6 +25,7 @@
 
 #import "ReaderConstants.h"
 #import "ThumbsMainToolbar.h"
+#import "UIDevice+VersionCheck.h"
 
 @implementation ThumbsMainToolbar
 

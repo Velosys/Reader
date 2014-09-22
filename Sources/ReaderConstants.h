@@ -37,3 +37,12 @@
 #define READER_DISABLE_IDLE FALSE
 #define READER_STANDALONE FALSE
 #define READER_BOOKMARKS TRUE
+
+extern NSString *const kReaderCopyrightNotice;
+
+#pragma mark - Velosys
+
+// Sent from the ReaderContentPage with the new current page's frame
+extern NSString *const kReaderPageFrameForCurrentPageNotification;
+
+extern NSString *const kReaderPageFrameUserInfoKey;

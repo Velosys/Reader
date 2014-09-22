@@ -25,4 +25,7 @@
 
 #import "ReaderConstants.h"
 
-static NSString *const kReaderCopyrightNotice = @"Reader v2.x.y • Copyright © 2011-2014 Julius Oklamcak. All rights reserved.";
+NSString *const kReaderCopyrightNotice = @"Reader v2.x.y • Copyright © 2011-2014 Julius Oklamcak. All rights reserved.";
+
+NSString *const kReaderPageFrameForCurrentPageNotification = @"ReaderPageFrameForCurrentPageNotification";
+NSString *const kReaderPageFrameUserInfoKey = @"ReaderPageFrameUserInfoKey";

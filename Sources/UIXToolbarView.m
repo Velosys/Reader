@@ -52,7 +52,7 @@
 	if ((self = [super initWithFrame:frame]))
 	{
 		self.autoresizesSubviews = YES;
-		self.userInteractionEnabled = YES;
+		self.userInteractionEnabled = NO;
 		self.contentMode = UIViewContentModeRedraw;
 		self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 

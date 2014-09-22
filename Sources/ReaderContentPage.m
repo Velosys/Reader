@@ -384,13 +384,13 @@
 - (id)processSingleTap:(UITapGestureRecognizer *)recognizer
 {
 	id result = nil; // Tap result object
-
+    
 	if (recognizer.state == UIGestureRecognizerStateRecognized)
 	{
+        CGPoint point = [recognizer locationInView:self];
+        
 		if (_links.count > 0) // Process the single tap
 		{
-			CGPoint point = [recognizer locationInView:self];
-
 			for (ReaderDocumentLink *link in _links) // Enumerate links
 			{
 				if (CGRectContainsPoint(link.rect, point) == true) // Found it
@@ -400,7 +400,7 @@
 			}
 		}
 	}
-
+    
 	return result;
 }
 
@@ -515,6 +515,8 @@
 	CGPDFPageRelease(_PDFPageRef), _PDFPageRef = NULL;
 
 	CGPDFDocumentRelease(_PDFDocRef), _PDFDocRef = NULL;
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 #if (READER_DISABLE_RETINA == TRUE) // Option
@@ -547,6 +549,20 @@
 	CGContextDrawPDFPage(context, _PDFPageRef); // Render the PDF page into the context
 
 	if (readerContentPage != nil) readerContentPage = nil; // Release self
+}
+
+#pragma mark - Velosys Features
+
+- (void)becomeVisibleInView:(UIView *)view
+{
+    CGRect pageRect = CGRectMake(0.0, 0.0, _pageWidth, _pageHeight);
+    
+    pageRect = [self.superview convertRect:pageRect toView:view];
+    
+    NSValue *pageRectValue = [NSValue valueWithCGRect:pageRect];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReaderPageFrameForCurrentPageNotification
+                                                        object:nil
+                                                      userInfo:@{ kReaderPageFrameUserInfoKey : pageRectValue }];
 }
 
 @end

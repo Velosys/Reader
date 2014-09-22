@@ -27,6 +27,7 @@
 #import "ReaderMainPagebar.h"
 #import "ReaderThumbCache.h"
 #import "ReaderDocument.h"
+#import "UIDevice+VersionCheck.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -332,7 +333,7 @@
 
 		thumbRect.origin.x += thumbWidth; // Next thumb X position
 	}
-
+    
 	[thumbsToHide enumerateKeysAndObjectsUsingBlock: // Hide unused thumbs
 		^(id key, id object, BOOL *stop)
 		{

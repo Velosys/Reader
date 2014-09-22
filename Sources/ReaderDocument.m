@@ -64,6 +64,8 @@
     NSSearchPathDomainMask _searchPathDomain;
 
 	NSString *_fileName;
+    
+    NSString *_filePath;
 
 	NSString *_password;
 
@@ -153,7 +155,7 @@
 {
 	ReaderDocument *document = nil; // ReaderDocument object
 
-    
+   
     NSURL *directoryURL = [[[NSFileManager defaultManager] URLsForDirectory:searchPathDirectory inDomains:searchPathDomain] lastObject];
     NSString *directoryPath = [directoryURL path];
     NSString *fullArchivePath = [directoryPath stringByAppendingPathComponent:archivePath];
@@ -235,6 +237,10 @@
             
 			_fileName = [_filePath lastPathComponent]; // File name
 
+            if( ![[NSFileManager defaultManager] fileExistsAtPath:fullFilePath] )
+                NSLog(@"File DNE");
+            
+            
 			CFURLRef docURLRef = (__bridge CFURLRef)[self fileURL]; // CFURLRef from NSURL
 
 			CGPDFDocumentRef thePDFDocRef = CGPDFDocumentCreateUsingUrl(docURLRef, _password);
@@ -280,7 +286,7 @@
 
 - (NSURL *)fileURL
 {
-	if (_fileURL == nil) // Create and keep the file URL the first time it is requested
+	if (_fileURL == nil && _filePath != nil ) // Create and keep the file URL the first time it is requested
 	{
         NSString *fullPath = [self fullFilePath];
 		_fileURL = [[NSURL alloc] initFileURLWithPath:fullPath isDirectory:NO]; // File URL from full file path
