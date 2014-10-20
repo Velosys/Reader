@@ -26,7 +26,6 @@
 #import "ReaderConstants.h"
 #import "ReaderMainToolbar.h"
 #import "ReaderDocument.h"
-#import "UIDevice+VersionCheck.h"
 
 #import <MessageUI/MessageUI.h>
 

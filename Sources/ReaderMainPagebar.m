@@ -27,7 +27,6 @@
 #import "ReaderMainPagebar.h"
 #import "ReaderThumbCache.h"
 #import "ReaderDocument.h"
-#import "UIDevice+VersionCheck.h"
 
 #import <QuartzCore/QuartzCore.h>
 
