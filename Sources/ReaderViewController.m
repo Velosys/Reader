@@ -312,7 +312,26 @@
         UIImage *printImage = [UIImage imageNamed:@"Reader-Resources.bundle/Reader-Print"];
         UIBarButtonItem *emailBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(emailButtonSelected:)];
         UIBarButtonItem *printBarButtonItem = [[UIBarButtonItem alloc] initWithImage:printImage style:UIBarButtonItemStylePlain target:self action:@selector(printButtonSelected:)];
-        [self.navigationItem setRightBarButtonItems:@[printBarButtonItem, emailBarButtonItem]];
+        
+        BOOL canEmail = NO;
+        if (object.canEmail && [MFMailComposeViewController canSendMail] ) // Document email enabled
+            canEmail = YES;
+        
+        BOOL canPrint = NO;
+        if ((object.canPrint == YES) && (object.password == nil)) // Document print enabled
+        {
+            Class printInteractionController = NSClassFromString(@"UIPrintInteractionController");
+            if ((printInteractionController != nil) && [printInteractionController isPrintingAvailable])
+                canPrint = YES;
+        }
+        
+        if( canEmail && canPrint )
+            [self.navigationItem setRightBarButtonItems:@[printBarButtonItem, emailBarButtonItem]];
+        else if( canEmail )
+            [self.navigationItem setRightBarButtonItems:@[emailBarButtonItem]];
+        else if( canPrint )
+            [self.navigationItem setRightBarButtonItems:@[printBarButtonItem]];
+    
         
 		if ((object != nil) && ([object isKindOfClass:[ReaderDocument class]])) // Valid object
 		{
