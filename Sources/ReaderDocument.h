@@ -38,6 +38,7 @@
 @property (nonatomic, strong, readonly) NSString *archivePath;
 @property (nonatomic, strong, readonly) NSString *cachePath;
 @property (nonatomic, strong, readonly) NSString *fileName;
+@property (nonatomic, strong, readonly) NSString *displayName;
 @property (nonatomic, strong, readonly) NSString *password;
 @property (nonatomic, strong, readonly) NSURL *fileURL;
 @property (nonatomic, readonly) NSSearchPathDirectory searchPathDirectory;
@@ -54,7 +55,8 @@
                                cachePath:(NSString *)cachePath
                     relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
                         searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
-                                password:(NSString *)phrase;
+                                password:(NSString *)phrase
+                             displayName:(NSString *)displayName;
 
 + (ReaderDocument *)unarchiveFromPath:(NSString *)archivePath
                              password:(NSString *)phrase;
@@ -64,7 +66,8 @@
                        cachePath:cachePath
             relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
                 searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
-                        password:(NSString *)phrase;
+                        password:(NSString *)phrase
+                     displayName:(NSString *)displayName;
 
 - (BOOL)archiveDocumentProperties;
 

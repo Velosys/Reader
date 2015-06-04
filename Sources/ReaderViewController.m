@@ -871,7 +871,7 @@
 
 	if (fileSize < 15728640ull) // Check attachment size limit (15MB)
 	{
-		NSURL *fileURL = document.fileURL; NSString *fileName = document.fileName;
+		NSURL *fileURL = document.fileURL;
 
 		NSData *attachment = [NSData dataWithContentsOfURL:fileURL options:(NSDataReadingMapped|NSDataReadingUncached) error:nil];
 
@@ -879,9 +879,12 @@
 		{
 			MFMailComposeViewController *mailComposer = [MFMailComposeViewController new];
 
-			[mailComposer addAttachmentData:attachment mimeType:@"application/pdf" fileName:fileName];
-
-			[mailComposer setSubject:fileName]; // Use the document file name for the subject
+            NSString *name = document.displayName;
+            if( name == nil )
+                name = document.fileName;
+            
+			[mailComposer addAttachmentData:attachment mimeType:@"application/pdf" fileName:name];
+			[mailComposer setSubject:name]; // Use the document file name for the subject
 
 			mailComposer.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
 			mailComposer.modalPresentationStyle = UIModalPresentationFormSheet;

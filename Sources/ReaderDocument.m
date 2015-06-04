@@ -150,6 +150,7 @@
                     relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
                         searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
                                 password:(NSString *)phrase
+                             displayName:(NSString *)displayName
 {
 	ReaderDocument *document = nil; // ReaderDocument object
 
@@ -167,7 +168,8 @@
                                                   cachePath:cachePath
                                        relativeToSearchPath:searchPathDirectory
                                            searchPathDomain:searchPathDomain
-                                                   password:phrase];
+                                                   password:phrase
+                                                displayName:displayName];
 	}
 
 	return document;
@@ -206,6 +208,7 @@
             relativeToSearchPath:(NSSearchPathDirectory)searchPathDirectory
                 searchPathDomain:(NSSearchPathDomainMask)searchPathDomain
                         password:(NSString *)phrase
+                     displayName:(NSString *)displayName
 {
 	if ((self = [super init])) // Initialize superclass first
 	{
@@ -234,6 +237,8 @@
             _searchPathDomain = searchPathDomain;
             
 			_fileName = [_filePath lastPathComponent]; // File name
+            
+            _displayName = displayName;
             
 			CFURLRef docURLRef = (__bridge CFURLRef)[self fileURL]; // CFURLRef from NSURL
 

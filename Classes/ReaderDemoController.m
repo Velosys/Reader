@@ -192,7 +192,8 @@
                                                           cachePath:nil
                                                relativeToSearchPath:NSLibraryDirectory
                                                    searchPathDomain:NSUserDomainMask
-                                                           password:phrase];
+                                                           password:phrase
+                                                        displayName:nil];
 
 	if (document != nil) // Must have a valid ReaderDocument object in order to proceed with things
 	{
