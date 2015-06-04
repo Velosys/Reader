@@ -1,13 +1,13 @@
 Pod::Spec.new do |s|
 	s.name			= 'Reader-Velosys'
-	s.version		= '2.8.2.velosys'
+	s.version		= '2.8.3.velosys'
 	s.summary		= 'An open-source PDF viewing framework'
 	s.author = {
 		'Julius Oklamcak' => 'joklamcak@gmail.com'
 	}
 	s.source = {
 		:git => 'https://github.com/Velosys/Reader-Velosys.git',
-		:tag => '2.8.2.velosys'
+		:tag => '2.8.3.velosys'
 	}
 	s.license	= 'MIT'
 	s.source_files = 'Sources/*.{h,m}'
