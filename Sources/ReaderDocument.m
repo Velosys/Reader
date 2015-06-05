@@ -345,6 +345,8 @@
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
 	[encoder encodeObject:_guid forKey:@"FileGUID"];
+    
+    [encoder encodeObject:_displayName forKey:@"DisplayName"];
 
 	[encoder encodeObject:_fileName forKey:@"FileName"];
 
@@ -376,6 +378,8 @@
 	if ((self = [super init])) // Superclass init
 	{
 		_guid = [decoder decodeObjectForKey:@"FileGUID"];
+        
+        _displayName = [decoder decodeObjectForKey:@"DisplayName"];
 
 		_fileName = [decoder decodeObjectForKey:@"FileName"];
 
